@@ -1,3 +1,4 @@
 /env
 *.pyc
 *.sh
+.DS_Store
