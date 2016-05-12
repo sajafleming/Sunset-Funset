@@ -1,4 +1,4 @@
-"""Move img files to one spot"""
+"""Renaming img files"""
 
 from os import rename, listdir
 

@@ -10,6 +10,8 @@ WEST_STRING = "West_Bounding_Coordinate:"
 EAST_STRING = "East_Bounding_Coordinate:"
 NORTH_STRING = "North_Bounding_Coordinate:"
 SOUTH_STRING = "South_Bounding_Coordinate:"
+# files ends with _1_meta.txt
+TXT_END_CHARACTERS = -11
 
 def get_coordinates_from_txt(filepath):
     """Opens contents of file path as a string, calculates offset and returns
@@ -52,7 +54,7 @@ def files_to_db(path_with_txt_files):
     
     for item in list_of_txt_files:
         if item.endswith(".txt"):
-            name = item[:-11]
+            name = item[:TXT_END_CHARACTERS] 
             path = "/Users/Sarah/PROJECT/txtfiles/" + item
 
             coordinates = get_coordinates_from_txt(path)
@@ -67,7 +69,6 @@ def files_to_db(path_with_txt_files):
             db.session.add(latlong)
 
     db.session.commit()
-
 
 
 if __name__ == "__main__":

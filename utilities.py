@@ -3,8 +3,10 @@
 from osgeo import gdal
 from math import ceil
 import scipy
-from numpy import zeros_like
+import scipy.signal
+import numpy as np
 import os
+from scipy.ndimage.filters import generic_filter as gf
 
 
 
@@ -58,9 +60,9 @@ def read_img_file(filename):
     geo = gdal.Open(filename)
     # print geo
     # print type(geo)
-    arr = geo.ReadAsArray()
+   arr = geo.ReadAsArray()
 
-    print arr
+    # print arr
     return arr
 
 # def read_surrounding_tiles(latlong):
@@ -94,7 +96,7 @@ def create_master_array(latlong):
             look_alike = read_img_file("/Users/Sarah/PROJECT/imgfiles/n33w117.img")
 
             #use this array to make a look alike - will have same dimensions with all zeros
-            filename_dict[file_key] = zeros_like(look_alike)
+            filename_dict[file_key] = np.zeros_like(look_alike)
 
     master_array = (scipy.vstack((
                            scipy.hstack((filename_dict[0], filename_dict[1], filename_dict[2])),
@@ -104,22 +106,47 @@ def create_master_array(latlong):
     return master_array
 
 
-create_master_array((32.0005,116.9999))
+# create_master_array((32.0005,116.9999))
 # /Users/Sarah/PROJECT/imgfiles/n33w117.img
 
-def horizontal_array_stack(index1, index2):
-    """Stack arrays horizontally [a] and [b] become [a][b]"""
 
-def vertical_array_stack(index1, index2):
-    """Stack arrays vertically [a] and [b] become [a]
-                                                  [b] 
-    """
-
-def find_local_max(array):
+def find_local_max(latlong):
     """Find local maximums of 2D array and return indexes."""
     # use algorithm below
     # http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.signal.argrelmax.html#scipy.signal.argrelmax
-    pass
+    master_array = create_master_array(latlong)
+
+    return scipy.signal.argrelmax(master_array)
+
+# find_local_max((32.0005,116.9999))
+
+def set_radius(latlong):
+    """Narrow down the master array to approximately a 20 mile radius (3612 entries)
+
+    center: (a,b) """
+
+    master_array = create_master_array((32.0005,116.9999))
+
+    a = ceil(latlong[0])
+    b = ceil(latlong[1])
+    n = 10835
+    r = 3612 # radius
+
+    # kernel = np.zeros(((2 * r) + 1, (2 * r) + 1))
+    # y,x = np.ogrid[-r:r+1, -r:r+1]
+    # mask = x ** 2 + y ** 2 <= r ** 2
+
+    y,x = np.ogrid[-a:n-a, -b:n-b]
+    mask = x*x + y*y <= r*r
+
+    array = np.ones((n, n))
+    array[mask] = 0
+
+    # do something here to compare
+
+    return mask
+
+set_radius((32.0005,116.9999))
 
 def check_obstructions_west(index):
     """Check that there are no obstructions to the west given an index"""
