@@ -2,3 +2,14 @@ body {
     background-image: url("https://c.tadst.com/gfx/750w/sunrise-sunset-sun-calculator.jpg?1");
     background-size: 100% auto;
 }
+
+form {
+    font-size: 80px;
+    color: white;
+    text-align: center;
+    font-family: Courier;
+}
+
+#googleMap {
+    margin: auto;
+}

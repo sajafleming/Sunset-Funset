@@ -1,10 +1,15 @@
 {% extends 'base.html' %}
 {% block content %}
 
-  Hello!!!!!!!!!!!!!
-  <form action="/sunset", method="POST">
+<form action="/sunset", method="POST">
     Enter a location: <input type="text" name="user-location" id="user-location">
-    <input type="submit" value="Submit">
-  </form>
+    <input type="button" value="Search" id="submit-location">
+</form>
+
+
+<div id="googleMap" style="width:500px;height:380px;"></div>
+
 
 {% endblock %}
+
+<!-- https://maps.googleapis.com/maps/api/place/textsearch/output?tacobell -->
