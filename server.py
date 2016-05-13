@@ -1,7 +1,7 @@
 """Sunset Project"""
 
 from jinja2 import StrictUndefined
-from flask import Flask, render_template, redirect, request, flash, session
+from flask import Flask, render_template, redirect, request, flash, session, jsonify
 # from flask_debugtoolbar import DebugToolbarExtension
 # from flask_sqlalchemy import SQLAlchemy
 
@@ -22,11 +22,21 @@ def home():
 
     return render_template("homepage.html")
 
-@app.route('/sunset')
+@app.route('/sunset-spots', methods=["GET"])
 def search_results():
     """Search results all pretty looking and such"""
+    # get lat/lng from URL parameters named "lat" and "lng"
 
-    return render_template("sunset-results.html")
+    # call into utilities functions to get list of lat and longs for best sunset spots
+
+    
+    # return JSON containing a list of lat/lng of best sunset spots
+
+    hella = {"1": "you hella cool"}
+    
+    return jsonify(**hella)
+    # google_json = request.form.get('user-location')
+    # print google_json
 
 
 if __name__ == "__main__":

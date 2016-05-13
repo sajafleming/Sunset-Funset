@@ -1,15 +1,18 @@
 {% extends 'base.html' %}
+
 {% block content %}
 
-<form action="/sunset", method="POST">
+<form id="user-input-form">
     Enter a location: <input type="text" name="user-location" id="user-location">
     <input type="button" value="Search" id="submit-location">
 </form>
 
-
 <div id="googleMap" style="width:500px;height:380px;"></div>
 
+<script>
+$("#submit-location").click(function() {
+  $(this).show();
+});
+</script>
 
 {% endblock %}
-
-<!-- https://maps.googleapis.com/maps/api/place/textsearch/output?tacobell -->
