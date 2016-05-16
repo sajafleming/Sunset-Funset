@@ -4,15 +4,16 @@
 
 <form id="user-input-form">
     Enter a location: <input type="text" name="user-location" id="user-location">
-    <input type="button" value="Search" id="submit-location">
+    <input type="submit" value="Search" id="submit-location">
 </form>
 
-<div id="googleMap" style="width:500px;height:380px;"></div>
+<div id="googleMap" style="width:1000px;height:500px;"></div>
 
 <script>
-$("#submit-location").click(function() {
-  $(this).show();
-});
+// $("#submit-location").click(function() {
+//     console.log($(this));
+//   $(this).show();
+// });
 </script>
 
 {% endblock %}

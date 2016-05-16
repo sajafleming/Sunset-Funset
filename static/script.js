@@ -1,44 +1,50 @@
 $(document).ready(function () {
 
-    function initialize() {
+    // function initialize() {
+
+    var mapProp = {
+      center:new google.maps.LatLng(37.7749,-122.4194),
+      zoom:10,
+      mapTypeId:google.maps.MapTypeId.TERRAIN
+    };
+    var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
+    
+    var geocoder = new google.maps.Geocoder();
+
+    document.getElementById('user-input-form').addEventListener('submit', function(evt) {
+      evt.preventDefault()
+      geocodeAddress(geocoder, map);
+    });
+    document.getElementById('user-location').addEventListener('submit', function(evt) {
+      geocodeAddress(geocoder, map);
+    });
 
 
-      var mapProp = {
-        center:new google.maps.LatLng(37.7749,-122.4194),
-        zoom:10,
-        mapTypeId:google.maps.MapTypeId.ROADMAP
-      };
-      var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
-      
-      var geocoder = new google.maps.Geocoder();
+    // bias search results toward area
+    var defaultBounds = new google.maps.LatLngBounds(
+      // new google.maps.LatLng(37.1, -95.7)
+      new google.maps.LatLng(37.1, -95.7));
 
-      document.getElementById('submit-location').addEventListener('click', function() {
-        geocodeAddress(geocoder, map);
-      });
-      document.getElementById('user-location').addEventListener('submit', function() {
-        geocodeAddress(geocoder, map);
-      });
-
-
-      // bias search results toward area
-      var defaultBounds = new google.maps.LatLngBounds(
-        // new google.maps.LatLng(37.1, -95.7)
-        new google.maps.LatLng(37.1, -95.7));
-
-      var options = {
-        bounds: defaultBounds
-      }
-
-      // Get the HTML input element for the autocomplete search box
-      var input = document.getElementById('user-location');
-      //google.maps.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-
-      // Create the autocomplete object
-      var autocomplete = new google.maps.places.Autocomplete(input, options);
+    var options = {
+      bounds: defaultBounds
     }
-    google.maps.event.addDomListener(window, 'load', initialize);
+
+    // Get the HTML input element for the autocomplete search box
+    var input = document.getElementById('user-location');
+    //google.maps.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+    // Create the autocomplete object
+    var autocomplete = new google.maps.places.Autocomplete(input, options);
+
+    google.maps.event.addListener(autocomplete, "place_changed", function(evt) {
+      geocodeAddress(geocoder, map);
+    });
+
 
   
+    // }
+    // google.maps.event.addDomListener(window, 'load', initialize);
+
     function geocodeAddress(geocoder, resultsMap) {
       console.log('hi!')
       var address = document.getElementById('user-location').value;
@@ -110,3 +116,4 @@ $(document).ready(function () {
 //     });
 //   }
 // }
+
