@@ -1,4 +1,4 @@
-# functions that know how to function
+""" Functions that know how to function """
 
 from osgeo import gdal
 from math import ceil
@@ -9,49 +9,60 @@ import os
 from scipy.ndimage.filters import generic_filter as gf
 from flask_sqlalchemy import SQLAlchemy
 
+DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
 
 
 def find_tile_name(latlong):
-    """Find the filename that includes the latlong given. Return latlong and
-    the n and w integer values."""
-    # take the ceiling of the tuple (all files are named according to NW coordinate)
+    """Find the filename that includes the given latlong. Return latlong and
+    the n and w integer values.
 
-    n = ceil(latlong[0])
-    w = ceil(latlong[1])
+    The topographical data is of 1-arc-second resolution so each tile has a 
+    rounded integer name of the corresponding NW coordinate. Note the exact 
+    coordinates of every tile is stored in a database.
+    """
 
-    # create file name string
+    # The ceiling of the latlong coordinate will give you the filename that contains it
+    n = int(ceil(latlong[0]))
+    w = int(ceil(latlong[1]))
+
     filename = "n%sw%s.img" % (n, w)
 
-    return filename, n, w # don't need filename but may need later
+    return filename, n, w
 
+    # TODO: split this funtion into two functions. One that just returns n and w and 
+    # one that generates the file name. This will get rid of repetition below
 
-def generate_filenames_list(n, w):
-    """Generate filename given north and west coordinates"""
+def generate_filenames(latlong):
+    """Generate filenames dictionary of surrounding tiles for a given latlong.
 
-    n = int(n)
-    w = int(w)
+    The key of the dictionary represents where that tile is located in terms of
+    the center tile (the tile that contains the given latlong).
+    """
 
-    # create list of filenames of the surrounding img files
+    filename, n, w = find_tile_name(latlong)
 
-    # RE NAME WITH LOCATIONS
+    filenames = ({ "NW": "n%sw%s.img" % (n + 1, w - 1),
+                   "N": "n%sw%s.img" % (n + 1, w),
+                   "NE": "n%sw%s.img" % (n + 1, w + 1),
+                   "W": "n%sw%s.img" % (n, w - 1),
+                   "C": filename,
+                   "E": "n%sw%s.img" % (n, w + 1),
+                   "SW": "n%sw%s.img" % (n - 1, w - 1),
+                   "S": "n%sw%s.img" % (n - 1, w),
+                   "SE": "n%sw%s.img" % (n - 1, w + 1)})
 
-    filenames = ({ 0: "n%sw%s.img" % (n + 1, w - 1),
-                   1: "n%sw%s.img" % (n + 1, w),
-                   2: "n%sw%s.img" % (n + 1, w + 1),
-                   3: "n%sw%s.img" % (n, w -1),
-                   4: "n%sw%s.img" % (n, w),
-                   5: "n%sw%s.img" % (n, w + 1),
-                   6: "n%sw%s.img" % (n - 1, w - 1),
-                   7: "n%sw%s.img" % (n - 1, w),
-                   8: "n%sw%s.img" % (n - 1, w + 1)})
     # print filenames
     return filenames
 
 
-def read_img_file(filename):
-    """Read img file as numpy array given a filename"""
+def read_img_file(file_path):
+    """Read .img file as 2D array given a file path. 
 
-    geo = gdal.Open(filename)
+    The .img files are a raster data type. The osgeo library provides a way to 
+    open these files and read them as a numpy 2D array. 
+    """
+
+    geo = gdal.Open(file_path)
     # print geo
     # print type(geo)
     arr = geo.ReadAsArray()
@@ -63,50 +74,79 @@ def read_img_file(filename):
 #     """Create array from img files. Return a numpy array with GDAL.
 #     return arrays surrounding as well."""
 
-def create_master_array(latlong):
-    """Create one giant array surrounding the user's inputted latlong
+def create_master_array(latlong, img_file_root=DEFAULT_IMG_FILE_ROOT):
+    """Create a master array containing all arrays surrounding the given latlong.
 
-    [0][1][2]
-    [3][4][5]
-    [6][7][8] Format of big array using indices from filelist dictionary
+    The array will be constructed from the dictionary of filenames with the keys
+    in the following structure:
+
+    [NW][N][NE]
+     [W][C][E]
+    [SW][S][SE]
     """
 
-    center_tile, n, w = find_tile_name(latlong)
+    filename_dict = generate_filenames(latlong)
 
-    # filenames_list = generate_filenames_list(n, w)
-    # print filenames_list
-
-    filename_dict = generate_filenames_list(n, w)
+    img_data_dict = {}
 
     for file_key in filename_dict:
-        # create file path for particular filename
-        filename = "/Users/Sarah/PROJECT/imgfiles/" + filename_dict[file_key]
-        if os.path.isfile(filename):
+
+        file_path = "/Users/Sarah/PROJECT/imgfiles/" + filename_dict[file_key] # TODO: move folder string to a constant
+
+        if os.path.isfile(file_path):
             # print filename
-            filename_dict[file_key] = read_img_file(filename) # MAKE NEW DICT FOR THIS - NO LONGER FILENAMES
+            # Append the array to a dictionary with the same key
+            img_data_dict[file_key] = read_img_file(file_path)
         else:
-            # make array of all zeros if file doesn't exist
-            # using an array from a file I know exists to know what dimensions are
-            look_alike = read_img_file("/Users/Sarah/PROJECT/imgfiles/n33w117.img")
+            # Make array of all zeros if file doesn't exist
+            # Using an array from a file I know exists to know what dimensions are
+            look_alike = read_img_file("/Users/Sarah/PROJECT/imgfiles/n33w117.img") # TODO: move n33w117.img to a constant
 
-            #use this array to make a look alike - will have same dimensions with all zeros
-            filename_dict[file_key] = np.zeros_like(look_alike)
+            # Use this array to make a look alike - will have same dimensions with all zeros
+            img_data_dict[file_key] = np.zeros_like(look_alike) # TODO: hardcode dimensions and use np.zeros() here
 
+    # TODO: add a comment describing what's going on here.
     master_array = (scipy.vstack((
-                           scipy.hstack((filename_dict[0], filename_dict[1], filename_dict[2])),
-                           scipy.hstack((filename_dict[3], filename_dict[4], filename_dict[5])),
-                           scipy.hstack((filename_dict[6], filename_dict[7], filename_dict[8]))
+                           scipy.hstack((img_data_dict["NW"], img_data_dict["N"], img_data_dict["NE"])),
+                           scipy.hstack((img_data_dict["W"], img_data_dict["C"], img_data_dict["E"])),
+                           scipy.hstack((img_data_dict["SW"], img_data_dict["S"], img_data_dict["SE"]))
                           )))
     return master_array
 
+def exact_coordinate_from_db(latlong):
+    """Find exact NW coordinate for a given latlong"""
+
+    file_exact_coordinates = LatLong.query.filter_by(filename=filename).one()
+
+    pass
+
+def find_indices(latlong, n_bound, w_bound):
+    """Find index for a latlong given the exact N and W bounds.
+
+    Latitude_Resolution: 0.00001
+    Longitude_Resolution: 0.00001
+    """
+
+    lat = latlong[0]
+    lng = latlong[1]
+
+    y_coordinate = abs((n_bound - lat) / .00001)
+    x_coordinate = abs((w_bound - lng) / .00001)
+
+    return (y_coordinate, x_coordinate)
 
 # create_master_array((32.0005,116.9999))
 # /Users/Sarah/PROJECT/imgfiles/n33w117.img
 
-def set_radius(latlong, master_array):
-    """Narrow down the master array to approximately a 20 mile radius (3612 entries)
+def set_radius(latlong, master_array, n_bound, w_bound):
+    """Narrow down the master array to approximately a 20 mile radius (3612 entries).
 
-    center: (a,b) """
+    Center of radius: (a,b) or the latlong the user entered. The values of the 2D
+    array within the radius will remain their original value and the values outside
+    of the radius will become zero. This is done using a mask. An array just outside
+    the radius will be returned along with the NW (top left) coordinate of the 
+    new array.
+    """
 
     master_array = create_master_array((32.0005,116.9999))
 
@@ -129,18 +169,23 @@ def set_radius(latlong, master_array):
     # hey[mask] = 0
     # return hey
 
+    # TODO: comment this
     y,x = np.ogrid[-a:n-a, -b:n-b]
     mask = x**2 + y**2 > r**2
 
     master_array[mask] = 0
+
+    find_indices(latlong, n_bound, w_bound)
+
+    radius_array = master_array[]
 
     print master_array
     return master_array
 
 # set_radius((32.0005,116.9999))
 
-def find_local_maxima(latlong):
-    """Find local maximums of 2D array and return indexes."""
+def find_local_maxima(latlong, db):
+    """Find local maxima of 2D array and return their positions."""
     # use algorithm below
     # http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.signal.argrelmax.html#scipy.signal.argrelmax
     master_array = create_master_array(latlong)
@@ -155,7 +200,10 @@ def find_local_maxima(latlong):
 find_local_maxima((32.0005,116.9999))
 
 def temp_pick_highest_three(latlong):
-    """temp functions for getting pins to put on map"""
+    """temp functions for getting pins to put on map
+
+    DELETE ME
+    """
 
     master_array = create_master_array(latlong)
     # radius_array = set_radius(latlong, master_array)
@@ -178,7 +226,7 @@ def check_min_viewing_angle(index):
     """Check that the angle to the horizon meets the min angle requirement"""
     pass
 
-def conver_point_to_latlong(latlong):
+def convert_to_latlong(coordinates):
     """Given a tuple of indexes for a point, calculate the latlong of that point.
 
     Reference the database for exact coordinates"""
