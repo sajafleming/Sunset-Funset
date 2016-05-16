@@ -11,6 +11,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
 
+DEGREES_PER_INDEX = 0.0002777777777685509
+
 
 def find_tile_name(latlong):
     """Find the filename that includes the given latlong. Return latlong and
@@ -23,7 +25,7 @@ def find_tile_name(latlong):
 
     # The ceiling of the latlong coordinate will give you the filename that contains it
     n = int(ceil(latlong[0]))
-    w = int(ceil(latlong[1]))
+    w = abs(int(ceil(latlong[1])))
 
     filename = "n%sw%s.img" % (n, w)
 
@@ -120,7 +122,11 @@ def exact_coordinate_from_db(latlong):
 
     pass
 
-def find_indices(latlong, n_bound, w_bound):
+# | filename |     w_bound     |     e_bound     |    n_bound     |    s_bound
+# | n38w118  | -118.0016666667 | -116.9983333333 | 38.00166666667 | 36.99833333333
+# will be upper left corner of master array
+
+def find_coordinates(latlong, n_bound=38.00166666667, w_bound=-118.0016666667):
     """Find index for a latlong given the exact N and W bounds.
 
     Latitude_Resolution: 0.00001
@@ -130,16 +136,16 @@ def find_indices(latlong, n_bound, w_bound):
     lat = latlong[0]
     lng = latlong[1]
 
-    y_coordinate = abs((n_bound - lat) / .00001)
-    x_coordinate = abs((w_bound - lng) / .00001)
+    y_coordinate = int(round(abs((n_bound - lat) / DEGREES_PER_INDEX)))
+    x_coordinate = int(round(abs((w_bound - lng) / DEGREES_PER_INDEX)))
 
     return (y_coordinate, x_coordinate)
 
 # create_master_array((32.0005,116.9999))
 # /Users/Sarah/PROJECT/imgfiles/n33w117.img
 
-def set_radius(latlong, master_array, n_bound, w_bound):
-    """Narrow down the master array to approximately a 20 mile radius (3612 entries).
+def set_radius(latlong, master_array, n_bound=38.00166666667, w_bound=-118.0016666667):
+    """Narrow down the master array to approximately a 20 mile radius (1032 entries).
 
     Center of radius: (a,b) or the latlong the user entered. The values of the 2D
     array within the radius will remain their original value and the values outside
@@ -148,75 +154,76 @@ def set_radius(latlong, master_array, n_bound, w_bound):
     new array.
     """
 
-    master_array = create_master_array((32.0005,116.9999))
+    # master_array = create_master_array((32.0005,116.9999))
 
-    a = ceil(latlong[0])
-    b = ceil(latlong[1])
+    lat = ceil(latlong[0])
+    lng = ceil(latlong[1])
 
     # VisibleDeprecationWarning: boolean index did not match indexed array along 
     # dimension 0; dimension is 10836 but corresponding boolean dimension is 10835
     n = 10836
-    r = 3612
-
-    # for testing
-
-    # a = 3
-    # b = 3
-    # n = 10
-    # r = 3
-
-    # hey = np.ones((10,10))
-    # hey[mask] = 0
-    # return hey
+    r = 1032
 
     # TODO: comment this
-    y,x = np.ogrid[-a:n-a, -b:n-b]
-    mask = x**2 + y**2 > r**2
+    # y,x = np.ogrid[-lat:n-lat, -lng:n-lng]
+    # mask = x**2 + y**2 > r**2
 
-    master_array[mask] = 0
+    # master_array[mask] = 0
 
-    find_indices(latlong, n_bound, w_bound)
+    y_coordinate, x_coordinate = find_coordinates(latlong, n_bound, w_bound)
 
-    radius_array = master_array[]
+    # [y-r:y+r+1][x-r:x+r+1] row, column
+    print y_coordinate
+    print x_coordinate
+    y_begin = max(y_coordinate - r, 0)
+    y_end = y_coordinate + r + 1
+    x_begin = max(x_coordinate - r, 0)
+    x_end = x_coordinate + r + 1
+    print y_begin, y_end
+    print x_begin, x_end
+    radius_array = master_array[y_begin:y_end, x_begin:x_end]
 
-    print master_array
-    return master_array
+    # H M M M M M M M M M M M M
+
+    print radius_array
+    return radius_array
 
 # set_radius((32.0005,116.9999))
 
-def find_local_maxima(latlong, db):
+def find_local_maxima(latlong, db=None):
     """Find local maxima of 2D array and return their positions."""
     # use algorithm below
     # http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.signal.argrelmax.html#scipy.signal.argrelmax
-    master_array = create_master_array(latlong)
+    master_array = create_master_array((36.79, -117.05))
+
     radius_array = set_radius(latlong, master_array)
 
     highest = scipy.signal.argrelmax(radius_array)
 
     print "AHHH"
     print highest
-    return highest
+    return master_array
 
-find_local_maxima((32.0005,116.9999))
+find_local_maxima((36.79, -117.05))
 
-def temp_pick_highest_three(latlong):
-    """temp functions for getting pins to put on map
+# def temp_pick_highest_three(latlong):
+#     """temp functions for getting pins to put on map
 
-    DELETE ME
-    """
+#     DELETE ME
+#     """
 
-    master_array = create_master_array(latlong)
-    # radius_array = set_radius(latlong, master_array)
-    highest = find_local_maxima(latlong)
+#     master_array = create_master_array(latlong)
+#     # radius_array = set_radius(latlong, master_array)
+#     highest = find_local_maxima(latlong)
 
-    top_three = ([(highest[0][0], highest[1][0]), 
-                  (highest[0][1], highest[1][1]),
-                  (highest[0][2], highest[1][2])])
-    print "AHhHHH"
-    print top_three
-    return top_three
+#     top_three = ([(highest[0][0], highest[1][0]), 
+#                   (highest[0][1], highest[1][1]),
+#                   (highest[0][2], highest[1][2])])
+#     print "AHhHHH"
+#     print top_three
+#     return top_three
 
-temp_pick_highest_three((32.0005,116.9999))
+# temp_pick_highest_three((32.0005,116.9999))
 
 def check_obstructions_west(index):
     """Check that there are no obstructions to the west given an index"""
