@@ -13,3 +13,9 @@ form {
 #googleMap {
     margin: auto;
 }
+
+#user-location {
+    height: 25px;
+    width: 250px;
+    font-size:14pt;
+}
