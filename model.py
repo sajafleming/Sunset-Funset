@@ -1,7 +1,7 @@
 """Models and database functions for sunset project."""
 
 from flask_sqlalchemy import SQLAlchemy
-from server import app
+# from server import app
 
 db = SQLAlchemy()
 
@@ -30,18 +30,12 @@ class LatLong(db.Model):
 def connect_to_db(app):
     """Connect the database to our Flask app."""
 
-    # Configure to use our database
-    # app = flask.Flask("app")
+    # Configure to use PSQL database
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres:///coordinates'
     app.config['SQLALCHEMY_ECHO'] = True
+    app.config[‘SQLALCHEMY_TRACK_MODIFICATIONS’] = False
     db.app = app
     db.init_app(app)
-    # with app.app_context():
-    #     # Extensions like Flask-SQLAlchemy now know what the "current" app
-    #     # is while within this block. Therefore, you can now run........
-    #     db.create_all()
-
-    # return app
 
 
 if __name__ == "__main__":
