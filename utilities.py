@@ -8,6 +8,8 @@ import numpy as np
 import os
 from scipy.ndimage.filters import generic_filter as gf
 from flask_sqlalchemy import SQLAlchemy
+# from model import db, LatLong
+from operator import itemgetter
 
 DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
 
@@ -25,7 +27,7 @@ def find_tile_name(latlong):
 
     # The ceiling of the latlong coordinate will give you the filename that contains it
     n = int(ceil(latlong[0]))
-    w = abs(int(ceil(latlong[1])))
+    w = abs(int(ceil(latlong[1]))) # filenames do not have negative numbers
 
     filename = "n%sw%s.img" % (n, w)
 
@@ -53,7 +55,6 @@ def generate_filenames(latlong):
                    "S": "n%sw%s.img" % (n - 1, w),
                    "SE": "n%sw%s.img" % (n - 1, w + 1)})
 
-    # print filenames
     return filenames
 
 
@@ -72,9 +73,6 @@ def read_img_file(file_path):
     # print arr
     return arr
 
-# def read_surrounding_tiles(latlong):
-#     """Create array from img files. Return a numpy array with GDAL.
-#     return arrays surrounding as well."""
 
 def create_master_array(latlong, img_file_root=DEFAULT_IMG_FILE_ROOT):
     """Create a master array containing all arrays surrounding the given latlong.
@@ -115,12 +113,19 @@ def create_master_array(latlong, img_file_root=DEFAULT_IMG_FILE_ROOT):
                           )))
     return master_array
 
-def exact_coordinate_from_db(latlong):
-    """Find exact NW coordinate for a given latlong"""
+# def exact_coordinate_from_db(filename="n33w117"):
+#     """Find exact NW coordinate for a given latlong"""
 
-    file_exact_coordinates = LatLong.query.filter_by(filename=filename).one()
+#     file_exact_coordinates = db.session.query(LatLong).filter_by(filename=filename).all()
 
-    pass
+#     # LatLong.query.filter_by(filename=filename).all()
+
+#     # (db.session.query(User).filter(User.username == username).count())
+
+#     print file_exact_coordinates[0]
+
+# print "HELLO HERE I AM"
+# exact_coordinate_from_db()
 
 # | filename |     w_bound     |     e_bound     |    n_bound     |    s_bound
 # | n38w118  | -118.0016666667 | -116.9983333333 | 38.00166666667 | 36.99833333333
@@ -151,10 +156,8 @@ def set_radius(latlong, master_array, n_bound=38.00166666667, w_bound=-118.00166
     array within the radius will remain their original value and the values outside
     of the radius will become zero. This is done using a mask. An array just outside
     the radius will be returned along with the NW (top left) coordinate of the 
-    new array.
+    new array. The radius array dimensions will be 2065 x 2065.
     """
-
-    # master_array = create_master_array((32.0005,116.9999))
 
     lat = ceil(latlong[0])
     lng = ceil(latlong[1])
@@ -185,32 +188,131 @@ def set_radius(latlong, master_array, n_bound=38.00166666667, w_bound=-118.00166
 
     # H M M M M M M M M M M M M
 
+    print "RADIUS ARRAY:"
     print radius_array
     return radius_array
 
 # set_radius((32.0005,116.9999))
 
 def find_local_maxima(latlong, db=None):
-    """Find local maxima of 2D array and return their positions."""
+    """Find local maxima of 2D array and return their positions.
+
+    The format of the returned coordinates is (array([row1, row2]), (array[column1, column2])
+
+    TEST
+    -----
+    >>> y = np.array([[1, 2, 1, 2],
+    ...               [2, 2, 0, 0],
+    ...               [5, 3, 4, 4]])
+    >>> argrelmax(y, axis=1)
+    (array([0]), array([1]))
+    """
     # use algorithm below
     # http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.signal.argrelmax.html#scipy.signal.argrelmax
     master_array = create_master_array((36.79, -117.05))
 
     radius_array = set_radius(latlong, master_array)
 
+    # TODO: change name, highest is not descriptive
     highest = scipy.signal.argrelmax(radius_array)
 
-    print "AHHH"
-    print highest
-    return master_array
+    coordinates_with_elevations = []
 
-find_local_maxima((36.79, -117.05))
+    for i in range(len(highest[0])):
+
+        elevation = elevation_by_coordinates((highest[0][i],highest[1][i]), radius_array)
+
+        if elevation > 0 and check_candidate_local_maximum((highest[0][i], highest[1][i]), radius_array):
+
+            coordinates_with_elevations.append(((highest[0][i],highest[1][i]), elevation))
+        
+
+    print "HIGHEST POINTS:"
+    print coordinates_with_elevations[0:101]
+    return coordinates_with_elevations, radius_array
+
+# find_local_maxima((36.79, -117.05))
+
+def check_candidate_local_maximum(candidate_point, radius_array):
+    """Check to see if realative maxima is realative max over an area of _______
+
+    10 indices for now
+    """
+
+    BOUNDING_BOX_WIDTH = 20
+    rows_lower_bound = -(BOUNDING_BOX_WIDTH / 2) + candidate_point[0]
+    rows_upper_bound = candidate_point[0] + (BOUNDING_BOX_WIDTH / 2)
+    column_lower_bound = -(BOUNDING_BOX_WIDTH / 2) + candidate_point[1]
+    column_upper_bound = candidate_point[1] + (BOUNDING_BOX_WIDTH / 2)
+
+    candidate_elevation = elevation_by_coordinates(candidate_point, radius_array) 
+
+    # TODO: split logic up to make it cleaner 
+    for row in range(max((rows_lower_bound), 0), min(rows_upper_bound, len(radius_array))):
+        for column in range(max(column_lower_bound, 0), min(column_upper_bound, len(radius_array))):
+
+            # print radius_array[row][column], candidate_elevation
+            if radius_array[row][column] > candidate_elevation:
+                return False
+    
+    return True
+
+
+def elevation_by_coordinates(coordinates, radius_array=None):
+    """Search the radius array by coordinates and return the elevation at that point
+
+    [row, column]
+    """
+
+    # FOR TESTING
+    # radius_array = np.array([[ 1,  2,  1,  2],
+    #                          [ 2,  2,  0,  0],
+    #                          [ 3, 15,  4,  4]]) 
+
+    elevation = radius_array[coordinates[0], coordinates[1]]
+
+    # print "elevation is %s" % (elevation)
+    return elevation
+
+def sort_by_elevation(coordinates_with_elevations, radius_array=None):
+    """Sort coordinates in descending order by highest elevation.
+
+    Highest is a tuple of arrays that correspond TODO
+    Use itemgetter from the operator library to sort in place. Will return a 
+    list of tuples of the following format: [((row, column), elevation)]
+    """
+
+    # for testing
+    # highest = (np.array([0, 2]), np.array([1, 1]))
+
+    # moved the following to find_local_maxima
+    # elevations = []
+    # for i in range(len(highest[0])):
+    #     elevation = elevation_by_coordinates((highest[0][i],highest[1][i]), radius_array)
+    #     if elevation > 0:
+    #         elevations.append(((highest[0][i],highest[1][i]), elevation))
+
+    # sort by second value of tuples
+    coordinates_with_elevations.sort(key=itemgetter(1), reverse=True)
+
+    top_100_elevations = coordinates_with_elevations[0:101]
+
+    print "SORTED ELEVATIONS"
+    print top_100_elevations
+    return top_100_elevations
+
+highest, radius_array = find_local_maxima((36.79, -117.05))
+sort_by_elevation(highest, radius_array)
+# sort_by_elevation()
+
 
 # def temp_pick_highest_three(latlong):
 #     """temp functions for getting pins to put on map
 
 #     DELETE ME
 #     """
+
+#     print "i made it here"
 
 #     master_array = create_master_array(latlong)
 #     # radius_array = set_radius(latlong, master_array)
@@ -219,6 +321,7 @@ find_local_maxima((36.79, -117.05))
 #     top_three = ([(highest[0][0], highest[1][0]), 
 #                   (highest[0][1], highest[1][1]),
 #                   (highest[0][2], highest[1][2])])
+
 #     print "AHhHHH"
 #     print top_three
 #     return top_three
@@ -238,9 +341,6 @@ def convert_to_latlong(coordinates):
 
     Reference the database for exact coordinates"""
 
-
-
-    file_exact_coordinates = LatLong.query.filter_by(filename=filename).one()
-
+    # file_exact_coordinates = LatLong.query.filter_by(filename=filename).one()
 
     pass
