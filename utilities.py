@@ -31,7 +31,31 @@ def find_tile_name(latlong):
 
     filename = "n%sw%s.img" % (n, w)
 
-    return filename, n, w
+    return filename, n, w 
+
+def validate_location_for_search(latlong):
+    """Test to see if the user entered a location that is out of the range of 
+    data for this app (out of the US)
+    """
+
+    filename, n, w = find_tile_name(latlong)
+
+    filepath = create_filepath(filename)
+
+    if os.path.isfile(filepath):
+        return True
+    else:
+        return False
+    
+def create_filename(n, w):
+    """Given n and w, create a filename string"""
+
+    return "n%sw%s.img" % (n, w)
+
+def create_filepath(filename):
+    """Create filepath for a given .img file"""
+
+    return DEFAULT_IMG_FILE_ROOT + filename
 
     # TODO: split this funtion into two functions. One that just returns n and w and 
     # one that generates the file name. This will get rid of repetition below
@@ -45,15 +69,15 @@ def generate_filenames(latlong):
 
     filename, n, w = find_tile_name(latlong)
 
-    filenames = ({ "NW": "n%sw%s.img" % (n + 1, w - 1),
-                   "N": "n%sw%s.img" % (n + 1, w),
-                   "NE": "n%sw%s.img" % (n + 1, w + 1),
-                   "W": "n%sw%s.img" % (n, w - 1),
-                   "C": filename,
-                   "E": "n%sw%s.img" % (n, w + 1),
-                   "SW": "n%sw%s.img" % (n - 1, w - 1),
-                   "S": "n%sw%s.img" % (n - 1, w),
-                   "SE": "n%sw%s.img" % (n - 1, w + 1)})
+    filenames = ({ "NW": create_filename(n + 1, w - 1),
+                   "N": create_filename(n + 1, w),
+                   "NE": create_filename(n + 1, w + 1),
+                   "W": create_filename(n, w - 1),
+                   "C": create_filename(n, w),
+                   "E": create_filename(n, w + 1),
+                   "SW": create_filename(n - 1, w - 1),
+                   "S": create_filename(n - 1, w),
+                   "SE": create_filename(n - 1, w + 1)})
 
     return filenames
 
@@ -91,12 +115,13 @@ def create_master_array(latlong, img_file_root=DEFAULT_IMG_FILE_ROOT):
 
     for file_key in filename_dict:
 
-        file_path = "/Users/Sarah/PROJECT/imgfiles/" + filename_dict[file_key] # TODO: move folder string to a constant
+        filepath = DEFAULT_IMG_FILE_ROOT + filename_dict[file_key] # TODO: move folder string to a constant
 
-        if os.path.isfile(file_path):
+        # check to make sure the file exists
+        if os.path.isfile(filepath):
             # print filename
             # Append the array to a dictionary with the same key
-            img_data_dict[file_key] = read_img_file(file_path)
+            img_data_dict[file_key] = read_img_file(filepath)
         else:
             # Make array of all zeros if file doesn't exist
             # Using an array from a file I know exists to know what dimensions are
@@ -137,6 +162,9 @@ def find_coordinates(latlong, n_bound=38.00166666667, w_bound=-118.0016666667):
     Latitude_Resolution: 0.00001
     Longitude_Resolution: 0.00001
     """
+
+    # I think the actual bounds are close enough to not have to query the database 
+    # get the exact values, since the indices are rounded anyway
 
     lat = latlong[0]
     lng = latlong[1]
@@ -234,17 +262,19 @@ def find_local_maxima(latlong, db=None):
 # find_local_maxima((36.79, -117.05))
 
 def check_candidate_local_maximum(candidate_point, radius_array):
-    """Check to see if realative maxima is realative max over an area of _______
+    """Check to see if realative maximum is realative max over an area of _______
 
     10 indices for now
     """
 
     BOUNDING_BOX_WIDTH = 20
+
     rows_lower_bound = -(BOUNDING_BOX_WIDTH / 2) + candidate_point[0]
     rows_upper_bound = candidate_point[0] + (BOUNDING_BOX_WIDTH / 2)
     column_lower_bound = -(BOUNDING_BOX_WIDTH / 2) + candidate_point[1]
     column_upper_bound = candidate_point[1] + (BOUNDING_BOX_WIDTH / 2)
 
+    # maybe change the following by passing the elevation with the candidate point?
     candidate_elevation = elevation_by_coordinates(candidate_point, radius_array) 
 
     # TODO: split logic up to make it cleaner 
@@ -301,8 +331,8 @@ def sort_by_elevation(coordinates_with_elevations, radius_array=None):
     print top_100_elevations
     return top_100_elevations
 
-highest, radius_array = find_local_maxima((36.79, -117.05))
-sort_by_elevation(highest, radius_array)
+# highest, radius_array = find_local_maxima((36.79, -117.05))
+# top_100_elevations = sort_by_elevation(highest, radius_array)
 # sort_by_elevation()
 
 
@@ -322,25 +352,74 @@ sort_by_elevation(highest, radius_array)
 #                   (highest[0][1], highest[1][1]),
 #                   (highest[0][2], highest[1][2])])
 
-#     print "AHhHHH"
 #     print top_three
 #     return top_three
 
 # temp_pick_highest_three((32.0005,116.9999))
 
-def check_obstructions_west(index):
-    """Check that there are no obstructions to the west given an index"""
-    pass
+def check_obstructions_west(candidate_point, radius_array):
+    """Check that there are no obstructions to the west given an index
 
-def check_min_viewing_angle(index):
-    """Check that the angle to the horizon meets the min angle requirement"""
-    pass
+    candidate_point is in the form ((row, column), elevation)
+    """
+    
+    candidate_point = ((1312, 621), 2344.2751)
+    # only testing current row now, might want to add above and below
+    row_index_constant = candidate_point[0][1]
+    candidate_point_elevation = candidate_point[1]
 
-def convert_to_latlong(coordinates):
-    """Given a tuple of indexes for a point, calculate the latlong of that point.
+    # look 20 indeces to the left of candidate point
+    for column_index in range(max((-100 + candidate_point[0][0]), 0), candidate_point[0][0]):
+        
+        # print radius_array[column_index,row_index_constant]
+        
+        # check to see if any of the points are higher than the candidate point
+        if radius_array[row_index_constant, column_index] > candidate_point_elevation:
 
-    Reference the database for exact coordinates"""
+            return False
 
-    # file_exact_coordinates = LatLong.query.filter_by(filename=filename).one()
+    return True
 
-    pass
+def pick_n_best_points(coordinates_with_elevations, radius_array, n=15):
+    """Pick n of the best sunset viewing spot candidate
+
+    Returns coordinates without elevation
+    """
+
+    top_100_elevations = sort_by_elevation(coordinates_with_elevations, radius_array)
+
+    n_points_latlongs = []
+
+    # increment n and exit loop if n >= whaterver n is
+
+    for candidate_point in coordinates_with_elevations:
+
+        if check_obstructions_west(candidate_point, radius_array) and len(n_points_latlongs) < n:
+            n_points_latlongs.append(candidate_point[0])
+
+    print "N POINTS"
+    print n_points_latlongs
+    return n_points_latlongs
+
+coordinates_with_elevations, radius_array = find_local_maxima((36.79, -117.05))
+pick_n_best_points(coordinates_with_elevations, radius_array)
+
+
+# # move to server.py since it will be the only function to use db
+# def convert_to_latlong(coordinates):
+#     """Given a tuple of indexes for a point, calculate the latlong of that point.
+
+#     Reference the database for exact coordinates"""
+
+#     # find_tile_name(coordinates)
+
+#     # file_exact_coordinates = LatLong.query.filter_by(filename=filename).one()
+
+#     # file_exact_coordinates = db.session.query(LatLong).filter_by(filename=filename).all()
+
+#     # LatLong.query.filter_by(filename=filename).all()
+
+#     # (db.session.query(User).filter(User.username == username).count())
+
+#     print file_exact_coordinates[0]
+
