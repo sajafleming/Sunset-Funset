@@ -1,5 +1,6 @@
 $(document).ready(function () {
 
+    // do not need to initialize since I have it wrapped in function ready
     // function initialize() {
 
     var mapProp = {
@@ -7,7 +8,7 @@ $(document).ready(function () {
       zoom:10,
       mapTypeId:google.maps.MapTypeId.TERRAIN
     };
-    var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
+    var map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
     
     var geocoder = new google.maps.Geocoder();
 
@@ -21,6 +22,7 @@ $(document).ready(function () {
 
 
     // bias search results toward area
+    // TODO: change to bias based on the user's browser
     var defaultBounds = new google.maps.LatLngBounds(
       // new google.maps.LatLng(37.1, -95.7)
       new google.maps.LatLng(37.1, -95.7));
@@ -52,8 +54,9 @@ $(document).ready(function () {
         console.log(results)
         if (status === google.maps.GeocoderStatus.OK) {
           resultsMap.setCenter(results[0].geometry.location);
-        // ajax call to get the places where markers should be based on location
+        // ajax call here to get the places where markers should be based on location
 
+          // this is added to get latlong
           console.log("Lat " + results[0].geometry.location.lat());
           console.log("Lng " + results[0].geometry.location.lng());
 
@@ -61,43 +64,79 @@ $(document).ready(function () {
           lng = results[0].geometry.location.lng()
 
           // Do ajax request with lat and lng
-          $.ajax({
-            url: "sunset-spots?lat=" + lat + "&lng=" + lng,
-            success: plotSunsetSpots,
-            dataType: "json"
-          });
+          // $.ajax({
+          //   url: "sunset-spots?lat=" + lat + "&lng=" + lng,
+          //   success: plotSunsetSpots,
+          //   dataType: "json"
+          // });
+
+          var params = {"lat": lat, "lng": lng};
+          $.get("/sunset-spots", params, plotSunsetSpots);
 
           // put inside success function
           var marker = new google.maps.Marker({
             map: resultsMap,
             position: results[0].geometry.location
+            // console.log(results[0].geometry);
+
           });
+
+
+
         }  else {
           alert('Geocode was not successful for the following reason: ' + status);
         }
+
       });
     }
 
-    function plotSunsetSpots(data) {
-      // data is a dictionary equal to what your /sunset-spots route constructed
-      console.log(data)
-      // pull out top sunset spots
+      function plotSunsetSpots(data) {
+        // data is a dictionary equal to what the /sunset-spots route constructed
+        // pull out top sunset spots
+        // console.log(data);
+        var sunsetCoordinates = data.results;
+        // console.log(sunsetCoordinates);
 
-      // for each top sunset spot, add a marker to the map
+        length = sunsetCoordinates.length;
+        
+        for (var i = 0; i < length - 1; i++) {
+          console.log(sunsetCoordinates[i][0], sunsetCoordinates[i][1]);
+
+          var myLatLng = {lat: sunsetCoordinates[i][0], lng: sunsetCoordinates[i][1]};
+
+          // var marker = new google.maps.Marker({
+          //     map: this.map,
+          //     position: myLatLng
+          //   });
+
+          addMarker(myLatLng);
+        }
+      }
+
+    function addMarker(myLatLng) {
+
+      console.log(myLatLng);
+      console.log(map);
+             
+      var marker = new google.maps.Marker({
+              position: myLatLng,
+              map: map
+      });
+      // marker.setVisible(true);
+      // marker.setMap(this.map);
     }
+
+
 });
 
+
+// TODO: figure out whether to use country restriction or bias to the user's location 
+// based on their browsers location
 
 // var input = document.getElementById('pac-input');
 // var options = {
 //   componentRestrictions: {country: 'us'}
 // };
-
-// // Create the autocomplete object
-// var autocomplete = new google.maps.places.Autocomplete(input, options);
-
-
-
 
 // Bias the autocomplete object to the user's geographical location,
 // as supplied by the browser's 'navigator.geolocation' object.
