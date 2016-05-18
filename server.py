@@ -2,7 +2,7 @@
 
 from jinja2 import StrictUndefined
 from flask import Flask, render_template, redirect, request, flash, session, jsonify
-from utilities import validate_location_for_search, find_local_maxima, pick_n_best_points
+from utilities import validate_location_for_search, find_local_maxima, pick_n_best_points, find_tile_name, create_filename
 # from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
 from model import connect_to_db, db, LatLong
@@ -33,27 +33,30 @@ def search_results():
 
     # validate that the location the user wants to search is within the US
     if validate_location_for_search(latlong):
-    # else return "I'm sorry, Sunset-Funset is not available in your area. Look west and hope for the best"
+
+        # query db for exact coordinates of NW corner of master array
+        filename_of_original_latlong, n, w = find_tile_name(latlong)
+        top_left_filename = create_filename(n + 1, w - 1)
+
+        exact_coordinates = LatLong.query.filter_by(filename=top_left_filename).first()
+        exact_N_bound = exact_coordinates.n_bound
+        exact_W_bound = exact_coordinates.w_bound
 
         # call into utilities functions to get list of lat and longs for best sunset spots
-        points_of_elevation, radius_array = find_local_maxima(latlong)
 
-        n_sunset_spots = pick_n_best_points(points_of_elevation, radius_array)
-
-        # now convert idices to latlongs
-        exact_coordinates = LatLong.query.filter_by(filename="n33w117")
-        exact_N_bound = exact_coordinates[2] 
-
-        print "HEY HERE I AM, I'M OVER HERE"
-        print exact_N_bound
+        n_sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound)
         
         # return JSON containing a list of lat/lng of best sunset spots
 
-        hella = {"1": "you hella cool"}
+        # hella = {"1": "you hella cool"}
+        # data = {"results": n_sunset_spots }
         
-        return jsonify(**hella)
+        return jsonify(results=n_sunset_spots)
         # google_json = request.form.get('user-location')
         # print google_json
+
+    else:
+        return jsonify(error="I'm sorry, Sunset-Funset is not available in your area. Look west and hope for the best :-)")
 
 
 if __name__ == "__main__":
