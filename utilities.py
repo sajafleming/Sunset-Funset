@@ -69,15 +69,18 @@ def generate_filenames(latlong):
 
     filename, n, w = find_tile_name(latlong)
 
-    filenames = ({ "NW": create_filename(n + 1, w - 1),
+    filenames = ({ "NW": create_filename(n + 1, w + 1),
                    "N": create_filename(n + 1, w),
-                   "NE": create_filename(n + 1, w + 1),
-                   "W": create_filename(n, w - 1),
+                   "NE": create_filename(n + 1, w - 1),
+                   "W": create_filename(n, w + 1),
                    "C": create_filename(n, w),
-                   "E": create_filename(n, w + 1),
-                   "SW": create_filename(n - 1, w - 1),
+                   "E": create_filename(n, w - 1),
+                   "SW": create_filename(n - 1, w + 1),
                    "S": create_filename(n - 1, w),
-                   "SE": create_filename(n - 1, w + 1)})
+                   "SE": create_filename(n - 1, w - 1)})
+
+    print "##########################################"
+    print filenames
 
     return filenames
 
@@ -171,7 +174,7 @@ def find_coordinates(latlong, master_array_n_bound, master_array_w_bound):
 
     # check absolute values 
     y_coordinate = int(round(abs((master_array_n_bound - lat) / DEGREES_PER_INDEX)))
-    x_coordinate = int(round(abs((master_array_w_bound - lng) / DEGREES_PER_INDEX)))
+    x_coordinate = int(round(abs(master_array_w_bound - lng)) / DEGREES_PER_INDEX)
 
     return (y_coordinate, x_coordinate)
 
@@ -189,6 +192,8 @@ def set_radius(latlong, master_array, master_array_n_bound, master_array_w_bound
     """
 
     y_coordinate, x_coordinate = find_coordinates(latlong, master_array_n_bound, master_array_w_bound)
+    print "COORDINATES:"
+    print y_coordinate, x_coordinate
 
     # VisibleDeprecationWarning: boolean index did not match indexed array along 
     # dimension 0; dimension is 10836 but corresponding boolean dimension is 10835
@@ -215,10 +220,13 @@ def set_radius(latlong, master_array, master_array_n_bound, master_array_w_bound
 
     cropped_array_top_left_coordinates = (y_begin, x_begin)
 
+    print "CROP INCICES:"
+    print x_begin, x_end, y_begin, y_end
+
     # cropped or reduced / masked_elevation_array elevation_array
     # also change the name of this function to crop array
 
-    print "RADIUS ARRAY:"
+    print "TOP LEFT COORDINATES:"
     # print radius_array
     print cropped_array_top_left_coordinates
     return radius_array, cropped_array_top_left_coordinates
@@ -241,8 +249,11 @@ def find_local_maxima(latlong, master_array_n_bound, master_array_w_bound):
     # use algorithm below
     # http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.signal.argrelmax.html#scipy.signal.argrelmax
     master_array = create_master_array(latlong)
+    print master_array
 
     radius_array, cropped_array_top_left_coordinates = set_radius(latlong, master_array, master_array_n_bound, master_array_w_bound)
+    print radius_array
+    print "helloooooo ^^^^"
 
     # TODO: change name, highest is not descriptive
     highest = scipy.signal.argrelmax(radius_array)
@@ -376,9 +387,12 @@ def convert_to_latlong(coordinate, master_array_n_bound, master_array_w_bound, c
     master_array_row_index = OFFSET[0] + coordinate[0]
     master_array_column_index = OFFSET[1] + coordinate[1]
 
-    lat_final = master_array_n_bound - master_array_column_index * DEGREES_PER_INDEX
-    long_final = master_array_w_bound - master_array_row_index * DEGREES_PER_INDEX
+    lat_final = master_array_n_bound - master_array_row_index * DEGREES_PER_INDEX
+    long_final = master_array_w_bound + master_array_column_index * DEGREES_PER_INDEX
+    # master_array_w_bound should be negative here
+    # add because it will be greater to the right
 
+    print "FINAL COORDINATES:"
     print (lat_final, long_final)
     return (lat_final, long_final)
 
