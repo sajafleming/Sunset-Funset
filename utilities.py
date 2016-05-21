@@ -149,96 +149,93 @@ def create_elevation_array(latlong, img_file_root=DEFAULT_IMG_FILE_ROOT):
             # Use this array to make a look alike - will have same dimensions with all zeros
             img_data_dict[file_key] = np.zeros_like(look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES] # TODO: hardcode dimensions and use np.zeros() here
 
-    # Use scipy to concatenate arrays veritally and horizontally
+    # Use scipy to concatenate arrays vertically and horizontally
     elevation_array = (scipy.vstack((
                            scipy.hstack((img_data_dict["NW"], img_data_dict["N"], img_data_dict["NE"])),
                            scipy.hstack((img_data_dict["W"], img_data_dict["C"], img_data_dict["E"])),
                            scipy.hstack((img_data_dict["SW"], img_data_dict["S"], img_data_dict["SE"]))
                           )))
-    
+
     return elevation_array
 
+# sample from database
 # | filename |     w_bound     |     e_bound     |    n_bound     |    s_bound
 # | n38w118  | -118.0016666667 | -116.9983333333 | 38.00166666667 | 36.99833333333
-# will be upper left corner of master array
 
 def find_coordinates(latlong, elevation_array_n_bound, elevation_array_w_bound):
-    """Find index for a latlong given the exact N and W bounds.
+    """Find index for elevation array of a given latlong.
 
-    Latitude_Resolution: 0.00001
-    Longitude_Resolution: 0.00001
+    The indices will be calculated with the exact N and W bounds from the database. 
+    DEGREES_PER_INDEX is calculated by taking the difference of NS (or EW) bounds
+    and dividing 3612 (the length and width of a single file). DEGREES_PER_INDEX
+    is calculated to be 0.0002777777777685509.
     """
-
-    # I think the actual bounds are close enough to not have to query the database 
-    # get the exact values, since the indices are rounded anyway
 
     lat = latlong[0]
     lng = latlong[1]
 
     # check absolute values 
-    y_coordinate = int(round(abs((elevation_array_n_bound - lat) / DEGREES_PER_INDEX)))
-    x_coordinate = int(round(abs((elevation_array_w_bound - lng) / DEGREES_PER_INDEX)))
+    y_index = int(round(abs((elevation_array_n_bound - lat) / DEGREES_PER_INDEX)))
+    x_index = int(round(abs((elevation_array_w_bound - lng) / DEGREES_PER_INDEX)))
 
-    return (y_coordinate, x_coordinate)
+    return (y_index, x_index)
 
 # create_elevation_array((32.0005,116.9999))
 # /Users/Sarah/PROJECT/imgfiles/n33w117.img
 
 def crop_elevation_array(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound):
-    """Narrow down the master array to approximately a 20 mile radius (1032 entries).
+    """Crop the elevation_data_array to approximately a 20 mile radius (1073 entries:
+    each index represents approximately .0186411357696567 miles)
+    around the given latlong.
 
-    Center of radius: (a,b) or the latlong the user entered. The values of the 2D
-    array within the radius will remain their original value and the values outside
-    of the radius will become zero. This is done using a mask. An array just outside
-    the radius will be returned along with the NW (top left) coordinate of the 
-    new array. The radius array dimensions will be 2065 x 2065.
+    The latlong the user entered will be the center of the radius. The values of 
+    the 2D array within the radius will remain their original value and the values 
+    outside of the radius will be changed to -1000, an arbitrary low number.
+    This is done using a mask. An array just outside this radius will be returned 
+    along with the NW (top left) coordinate of the new array. The radius array 
+    dimensions will be 2146 x 2146.
     """
 
-    y_coordinate, x_coordinate = find_coordinates(latlong, elevation_array_n_bound, elevation_array_w_bound)
+    y_index, x_index = find_coordinates(latlong, elevation_array_n_bound, elevation_array_w_bound)
     #print "COORDINATES:"
-    #print y_coordinate, x_coordinate
+    #print y_index, x_index
 
     n = len(elevation_array)
-    r = 1032
+    r = 1073
 
     # TODO: comment this
-    y,x = np.ogrid[-y_coordinate:n-y_coordinate, -x_coordinate:n-x_coordinate]
+    y,x = np.ogrid[-y_index:n-y_index, -x_index:n-x_index]
     mask = x**2 + y**2 > r**2
 
-    #elevation_array[mask] = 0
+    elevation_array[mask] = -1000
 
-
-    # [y-r:y+r+1][x-r:x+r+1] row, column
-    # print y_coordinate
-    # print x_coordinate
-    y_begin = max(y_coordinate - r, 0)
-    y_end = y_coordinate + r + 1
-    x_begin = max(x_coordinate - r, 0)
-    x_end = x_coordinate + r + 1
-    # print y_begin, y_end
-    # print x_begin, x_end
+    y_begin = max(y_index - r, 0)
+    y_end = y_index + r + 1
+    x_begin = max(x_index - r, 0)
+    x_end = x_index + r + 1
+   
     cropped_elevation_array = elevation_array[y_begin:y_end, x_begin:x_end]
 
-    cropped_array_top_left_coordinates = (y_begin, x_begin)
+    cropped_array_top_left_indices = (y_begin, x_begin)
 
     #print "CROP INCICES:"
     #print x_begin, x_end, y_begin, y_end
 
-    # cropped or reduced / masked_elevation_array elevation_array
-    # also change the name of this function to crop array
-
     #print "TOP LEFT COORDINATES:"
     # print cropped_elevation_array
-    #print cropped_array_top_left_coordinates
-    return cropped_elevation_array, cropped_array_top_left_coordinates
+    #print cropped_array_top_left_indices
+    return cropped_elevation_array, cropped_array_top_left_indices
 
 # crop_elevation_array((32.0005,116.9999))
 
 
 def find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound):
-    """Find local maxima of 2D array and return their positions.
+    """Find local maxima of 2D array and return positions in array.
 
-    The format of the returned coordinates is (array([row1, row2]), (array[column1, column2])
+    The format of the returned coordinates is (array([row1, row2]), (array[column1, column2]). 
+    The algorithm used to find local maxima is argrelmax which belongs to the 
+    scipy.signal library. The argrelmax returns values where ``comparator(data[n], data[n+1:n+order+1])``
+    is True. For more info see http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.signal.argrelmax.html#scipy.signal.argrelmax
 
     TEST
     -----
@@ -247,41 +244,46 @@ def find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevati
     ...               [5, 3, 4, 4]])
     >>> argrelmax(y, axis=1)
     (array([0]), array([1]))
+
+    For every point returned by argrelmax, check if local maxima condition still
+    true when looking at an area of about FIXME BOUNDING_BOX_WIDTH
+
+    The function returns all local maximums in a list in the form:
+    [((row, column), elevation), ... ]
     """
-    # use algorithm below
-    # http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.signal.argrelmax.html#scipy.signal.argrelmax
-    # elevation_array = create_elevation_array(latlong)
-    print elevation_array
 
-    cropped_elevation_array, cropped_array_top_left_coordinates = \
+    cropped_elevation_array, cropped_array_top_left_indices = \
         crop_elevation_array(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound)
-    #print cropped_elevation_array
-    #print "helloooooo ^^^^"
 
-    # TODO: change name, highest is not descriptive
-    highest = scipy.signal.argrelmax(cropped_elevation_array)
+    local_maxima = scipy.signal.argrelmax(cropped_elevation_array)
 
     coordinates_with_elevations = []
 
-    for i in range(len(highest[0])):
+    # Loop over every point returned in argrelmax and do further analysis:
+    for i in range(len(local_maxima[0])):
 
-        elevation = elevation_by_coordinates((highest[0][i],highest[1][i]), cropped_elevation_array)
+        # For each local max indices given, find the corresponding elevation
+        elevation = elevation_by_indexs((local_maxima[0][i],local_maxima[1][i]), cropped_elevation_array)
 
-        if elevation > 0 and check_candidate_local_maximum((highest[0][i], highest[1][i]), cropped_elevation_array):
+        # Throw out all negative elevations they are not good for watching sunsets :)
+        # Check each candidate local maxima to see if it is also a maxima for 
+        # the area around it. If these conditions are met, append it to the list
+        # of coordinates with elevations.
+        if elevation > 0 and check_candidate_local_maximum((local_maxima[0][i], local_maxima[1][i]), cropped_elevation_array):
 
-            coordinates_with_elevations.append(((highest[0][i],highest[1][i]), elevation))
+            coordinates_with_elevations.append(((local_maxima[0][i],local_maxima[1][i]), elevation))
         
 
-    #print "HIGHEST POINTS:"
+    #print "local_maxima POINTS:"
     #print coordinates_with_elevations[0:101]
-    return coordinates_with_elevations, cropped_elevation_array, cropped_array_top_left_coordinates
+    return coordinates_with_elevations, cropped_elevation_array, cropped_array_top_left_indices
 
 # find_local_maxima((36.79, -117.05))
 
 BOUNDING_BOX_WIDTH = 20
 
 def check_candidate_local_maximum(candidate_point, cropped_elevation_array):
-    """Check to see if realative maximum is realative max over an area of _______
+    """Check to see if realative maximum is realative max over an area of FIXME
 
     10 indices for now
     """
@@ -291,22 +293,30 @@ def check_candidate_local_maximum(candidate_point, cropped_elevation_array):
     column_lower_bound = -(BOUNDING_BOX_WIDTH / 2) + candidate_point[1]
     column_upper_bound = candidate_point[1] + (BOUNDING_BOX_WIDTH / 2)
 
+    rows_for_checking_start = max((rows_lower_bound), 0)
+    rows_for_checking_end = min(rows_upper_bound, len(cropped_elevation_array))
+    columns_for_checking_start = max(column_lower_bound, 0) 
+    columns_for_checking_end = min(column_upper_bound, len(cropped_elevation_array))
+
     # maybe change the following by passing the elevation with the candidate point?
-    candidate_elevation = elevation_by_coordinates(candidate_point, cropped_elevation_array) 
+    candidate_elevation = elevation_by_indexs(candidate_point, cropped_elevation_array) 
 
-    # TODO: split logic up to make it cleaner 
-    for row in range(max((rows_lower_bound), 0), min(rows_upper_bound, len(cropped_elevation_array))):
-        for column in range(max(column_lower_bound, 0), min(column_upper_bound, len(cropped_elevation_array))):
+    # TODO: comment and doc string
+    for row in range(rows_for_checking_start, rows_for_checking_end):
+        for column in range(columns_for_checking_start, columns_for_checking_end):
 
-            # print cropped_elevation_array[row][column], candidate_elevation
+            # If the elevation of a point is greater than the elevation for the 
+            # candidate point, return False meaning the candidate point will be 
+            # thrown out as a local maxima. 
             if cropped_elevation_array[row][column] > candidate_elevation:
                 return False
     
     return True
 
 
-def elevation_by_coordinates(coordinates, cropped_elevation_array=None):
-    """Search the radius array by coordinates and return the elevation at that point
+def elevation_by_indexs(coordinates, cropped_elevation_array):
+    """Search the cropped_elevation_array by coordinates and return the elevation 
+    at that point.
 
     [row, column]
     """
@@ -323,24 +333,15 @@ def elevation_by_coordinates(coordinates, cropped_elevation_array=None):
 
 
 def sort_by_elevation(coordinates_with_elevations, cropped_elevation_array=None):
-    """Sort coordinates in descending order by highest elevation.
+    """Sort coordinates in descending order by local_maxima elevation.
 
-    Highest is a tuple of arrays that correspond TODO
+    local_maxima is a tuple of arrays that correspond TODO
+
     Use itemgetter from the operator library to sort in place. Will return a 
     list of tuples of the following format: [((row, column), elevation)]
     """
 
-    # for testing
-    # highest = (np.array([0, 2]), np.array([1, 1]))
-
-    # moved the following to find_local_maxima
-    # elevations = []
-    # for i in range(len(highest[0])):
-    #     elevation = elevation_by_coordinates((highest[0][i],highest[1][i]), cropped_elevation_array)
-    #     if elevation > 0:
-    #         elevations.append(((highest[0][i],highest[1][i]), elevation))
-
-    # sort by second value of tuples
+    # sort by second value of tuples (aka the elevation)
     coordinates_with_elevations.sort(key=itemgetter(1), reverse=True)
 
     top_100_elevations = coordinates_with_elevations[0:101]
@@ -349,15 +350,15 @@ def sort_by_elevation(coordinates_with_elevations, cropped_elevation_array=None)
     #print top_100_elevations
     return top_100_elevations
 
-# highest, cropped_elevation_array = find_local_maxima((36.79, -117.05))
-# top_100_elevations = sort_by_elevation(highest, cropped_elevation_array)
+# local_maxima, cropped_elevation_array = find_local_maxima((36.79, -117.05))
+# top_100_elevations = sort_by_elevation(local_maxima, cropped_elevation_array)
 # sort_by_elevation()
 
 
 def check_obstructions_west(candidate_point, cropped_elevation_array):
     """Check that there are no obstructions to the west given an index
 
-    candidate_point is in the form ((row, column), elevation)
+    Candidate_point is in the form ((row, column), elevation).
     """
     # check this to make sure it's doing what I want
     
@@ -378,12 +379,12 @@ def check_obstructions_west(candidate_point, cropped_elevation_array):
 
     return True
 
-def convert_to_latlong(coordinate, elevation_array_n_bound, elevation_array_w_bound, cropped_array_top_left_coordinates):
+def convert_to_latlong(coordinate, elevation_array_n_bound, elevation_array_w_bound, cropped_array_top_left_indices):
     """Given a tuple of indexes for a point, calculate the latlong of that point.
 
     Uses exact coordinates from db"""
 
-    OFFSET = cropped_array_top_left_coordinates
+    OFFSET = cropped_array_top_left_indices
 
     # row of coordinate plus row of offset
     elevation_array_row_index = OFFSET[0] + coordinate[0]
@@ -407,7 +408,7 @@ def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound
 
     elevation_array = create_elevation_array(latlong)
 
-    coordinates_with_elevations, cropped_elevation_array, cropped_array_top_left_coordinates = find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound)
+    coordinates_with_elevations, cropped_elevation_array, cropped_array_top_left_indices = find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound)
 
     top_100_elevations = sort_by_elevation(coordinates_with_elevations, cropped_elevation_array)
 
@@ -426,14 +427,14 @@ def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound
 
     for final_point in n_points_latlongs:
 
-        final_latlongs.append(convert_to_latlong(final_point, elevation_array_n_bound, elevation_array_w_bound, cropped_array_top_left_coordinates))
+        final_latlongs.append(convert_to_latlong(final_point, elevation_array_n_bound, elevation_array_w_bound, cropped_array_top_left_indices))
 
-    #print "N POINTS"
-    #print final_latlongs
+    print "N POINTS"
+    print final_latlongs
     return final_latlongs
 
 
-pick_n_best_points((36.79, -117.05), 38.00166666667, -118.0016666667)
+# pick_n_best_points((36.79, -117.05), 38.00166666667, -118.0016666667)
 # find_filename((37.7749, 122.4194))
 
 
