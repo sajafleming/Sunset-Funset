@@ -8,37 +8,48 @@ import numpy as np
 import os
 from scipy.ndimage.filters import generic_filter as gf
 from flask_sqlalchemy import SQLAlchemy
-# from model import connect_to_db, db, LatLong
 from operator import itemgetter
 
 DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
 
 DEGREES_PER_INDEX = 0.0002777777777685509
 
+OVERLAPPING_INDICES = 12
 
-def find_tile_name(latlong):
-    """Find the filename that includes the given latlong. Return latlong and
-    the n and w integer values.
+def find_filename(latlong):
+    """Find the filename of the file that includes data for the given latlong. 
+    Return latlong and the n and w integer values in the filename.
 
-    The topographical data is of 1-arc-second resolution so each tile has a 
-    rounded integer name of the corresponding NW coordinate. Note the exact 
-    coordinates of every tile is stored in a database.
+    The topographic data is 1-arc-second of resolution and each file has a 
+    rounded integer name of the corresponding NW coordinate. Note the exact NESW
+    bounds of every tile are stored in a database.
+
+    If the given latlong is (38.0016666667, -118.001666667) the function will 
+    return (n38w123.img, 38, 123)
     """
 
-    # The ceiling of the latlong coordinate will give you the filename that contains it
+    # The ceiling of the lat coordinate will give the n int value in the filename
     n = int(ceil(latlong[0]))
+    # The actually long is negative but the files are named as postitive integers
+    # so take the abs value of the coordinate before the ceiling 
     w = int(ceil(abs(latlong[1]))) # will always return a postive integer
 
     filename = "n%sw%s.img" % (n, w)
 
+    print filename, n, w
     return filename, n, w 
+
+# TODO: split this funtion into two functions. One that just returns n and w and 
+# one that generates the file name. This will get rid of repetition below
 
 def validate_location_for_search(latlong):
     """Test to see if the user entered a location that is out of the range of 
-    data for this app (out of the US)
+    data for this app (out of the US).
+
+    If the filepath does not exist, then there is no data for that area.
     """
 
-    filename, n, w = find_tile_name(latlong)
+    filename, n, w = find_filename(latlong)
 
     filepath = create_filepath(filename)
 
@@ -48,7 +59,7 @@ def validate_location_for_search(latlong):
         return False
     
 def create_filename(n, w):
-    """Given n and w, create a filename string"""
+    """Given integer n and w coordinates, create a filename string"""
 
     return "n%sw%s.img" % (n, w)
 
@@ -57,17 +68,16 @@ def create_filepath(filename):
 
     return DEFAULT_IMG_FILE_ROOT + filename
 
-    # TODO: split this funtion into two functions. One that just returns n and w and 
-    # one that generates the file name. This will get rid of repetition below
 
-def generate_filenames(latlong):
-    """Generate filenames dictionary of surrounding tiles for a given latlong.
+def generate_surrounding_filenames(latlong):
+    """Generate dictionary of filenames for the surrounding data for a given 
+    latlong.
 
     The key of the dictionary represents where that tile is located in terms of
-    the center tile (the tile that contains the given latlong).
+    the center tile (the tile that contains the original latlong).
     """
 
-    filename, n, w = find_tile_name(latlong)
+    filename, n, w = find_filename(latlong)
 
     filenames = ({ "NW": create_filename(n + 1, w + 1),
                    "N": create_filename(n + 1, w),
@@ -86,15 +96,16 @@ def generate_filenames(latlong):
 
 
 def read_img_file(file_path):
-    """Read .img file as 2D array given a file path. 
+    """Read .img file as 2D numpy array given a filepath. 
 
-    The .img files are a raster data type. The osgeo library provides a way to 
-    open these files and read them as a numpy 2D array. 
+    The .img files are raster data. The osgeo library provides a way to 
+    open these files and read them as a numpy 2D array.
+
+    Each array read should have dimensions 3612 x 3612. 
     """
 
     geo = gdal.Open(file_path)
-    # print geo
-    # print type(geo)
+   
     arr = geo.ReadAsArray()
 
     # print arr
@@ -111,11 +122,13 @@ def create_elevation_array(latlong, img_file_root=DEFAULT_IMG_FILE_ROOT):
      [W][C][E]
     [SW][S][SE]
 
-    Overlap is approx. 11.999999880419653 indices, so I will slice 12 off the right and bottom
-    12 * 3 = 36 less height and width
+    The .img files have an overlap of approx. 11.999999880419653 indices. To 
+    reconcile this, slice the OVERLAPPING_INDICES off the south and east bounds.
+
+    This will return an array with dimensions of 10,800 * 10,800
     """
 
-    filename_dict = generate_filenames(latlong)
+    filename_dict = generate_surrounding_filenames(latlong)
 
     img_data_dict = {}
 
@@ -123,25 +136,26 @@ def create_elevation_array(latlong, img_file_root=DEFAULT_IMG_FILE_ROOT):
 
         filepath = DEFAULT_IMG_FILE_ROOT + filename_dict[file_key] # TODO: move folder string to a constant
 
-        # check to make sure the file exists
+        # Check to make sure the file exists
         if os.path.isfile(filepath):
             # print filename
-            # Append the array to a dictionary with the same key and crop by 12 on right and bottom
-            img_data_dict[file_key] = read_img_file(filepath)[:-12,:-12]
+            # Add the array to a dictionary with the same key and crop by 12 on right and bottom
+            img_data_dict[file_key] = read_img_file(filepath)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
         else:
             # Make array of all zeros if file doesn't exist
             # Using an array from a file I know exists to know what dimensions are
             look_alike = read_img_file("/Users/Sarah/PROJECT/imgfiles/n33w117.img") # TODO: move n33w117.img to a constant
 
             # Use this array to make a look alike - will have same dimensions with all zeros
-            img_data_dict[file_key] = np.zeros_like(look_alike)[:-12,:-12] # TODO: hardcode dimensions and use np.zeros() here
+            img_data_dict[file_key] = np.zeros_like(look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES] # TODO: hardcode dimensions and use np.zeros() here
 
-    # TODO: add a comment describing what's going on here.
+    # Use scipy to concatenate arrays veritally and horizontally
     elevation_array = (scipy.vstack((
                            scipy.hstack((img_data_dict["NW"], img_data_dict["N"], img_data_dict["NE"])),
                            scipy.hstack((img_data_dict["W"], img_data_dict["C"], img_data_dict["E"])),
                            scipy.hstack((img_data_dict["SW"], img_data_dict["S"], img_data_dict["SE"]))
                           )))
+    
     return elevation_array
 
 # | filename |     w_bound     |     e_bound     |    n_bound     |    s_bound
@@ -385,7 +399,7 @@ def convert_to_latlong(coordinate, elevation_array_n_bound, elevation_array_w_bo
     return (lat_final, long_final)
 
 
-def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound, n=100):
+def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound, n=15):
     """Pick n of the best sunset viewing spot candidate
 
     Returns coordinates without elevation
@@ -419,6 +433,7 @@ def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound
     return final_latlongs
 
 
-# pick_n_best_points((36.79, -117.05), 38.00166666667, -118.0016666667)
+pick_n_best_points((36.79, -117.05), 38.00166666667, -118.0016666667)
+# find_filename((37.7749, 122.4194))
 
 
