@@ -266,7 +266,7 @@ def find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevati
 
     # Find the elevation of the point that the user entered
     elevation_of_center = elevation_by_indices(user_latlong_coordinates, cropped_elevation_array)
-    coordinates_with_elevations = []
+    candidates_with_elevations = []
 
     # Loop over every point returned in argrelmax and do further analysis:
     for i in range(len(local_maxima[0])):
@@ -283,12 +283,12 @@ def find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevati
             # Difference between user's entered location and the points elevation
             relative_elevation = elevation - elevation_of_center
 
-            coordinates_with_elevations.append(((local_maxima[0][i],local_maxima[1][i]), relative_elevation))
+            candidates_with_elevations.append(((local_maxima[0][i],local_maxima[1][i]), relative_elevation))
         
 
     #print "local_maxima POINTS:"
-    #print coordinates_with_elevations[0:101]
-    return coordinates_with_elevations, cropped_elevation_array, cropped_array_top_left_indices
+    #print candidates_with_elevations[0:101]
+    return candidates_with_elevations, cropped_elevation_array, cropped_array_top_left_indices
 
 # find_local_maxima((36.79, -117.05))
 
@@ -349,7 +349,7 @@ def elevation_by_indices(coordinates, cropped_elevation_array):
 
 
 # the function below is replaced by a function that sorts on ranking not elevation
-# def sort_by_elevation(coordinates_with_elevations, cropped_elevation_array=None):
+# def sort_by_elevation(candidates_with_elevations, cropped_elevation_array=None):
 #     """Sort coordinates in descending order by local_maxima elevation.
 
 #     local_maxima is a tuple of arrays that correspond TODO
@@ -359,9 +359,9 @@ def elevation_by_indices(coordinates, cropped_elevation_array):
 #     """
 
 #     # sort by second value of tuples (aka the elevation)
-#     coordinates_with_elevations.sort(key=itemgetter(1), reverse=True)
+#     candidates_with_elevations.sort(key=itemgetter(1), reverse=True)
 
-#     top_100_elevations = coordinates_with_elevations[0:101]
+#     top_100_elevations = candidates_with_elevations[0:101]
 
 #     return top_100_elevations
 
@@ -463,7 +463,7 @@ def rank_candidate_points(candidate_points):
     sunset viewing spot the point is. Returns the top 100 ranked sunsets.
 
     Returns a list of tuples of coordinates with the indices and the calculated
-    ranking. The list is sorted by ranking
+    ranking. The list is sorted by ranking.
     """
 
     candidates_with_ranking = []
@@ -475,9 +475,13 @@ def rank_candidate_points(candidate_points):
 
         elevation_score = candidate_point[1][0]
         cliffiness_score = candidate_point[1][1]
+        print "ELEVATION SCORE"
+        print elevation_score
+        print "CLIFF SCORE"
+        print cliffiness_score
 
         # Multiply the scores by weight to create a ranking number
-        # candidates_score = (elevation_score * .75) + (cliffiness_score * .05)
+        # candidates_score = (elevation_score * .05) + (cliffiness_score * .1)
         candidates_score = elevation_score * cliffiness_score
 
         # Add point and rank to a list
@@ -510,55 +514,58 @@ def convert_to_latlong(coordinate, elevation_array_n_bound, elevation_array_w_bo
     return (lat_final, long_final)
 
 
-def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound, n=100):
+def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound, n=15):
     """Pick n of the best sunset viewing spot candidate
 
     Returns coordinates without elevation
     """
 
+    # Create array with elevation data surrounding the user's inputte latlong
     elevation_array = create_elevation_array(latlong)
 
-    coordinates_with_elevations, cropped_elevation_array, cropped_array_top_left_indices \
+    # Begin filter process:
+    # 1. filter out any point that is not a local maxima over a certain area
+    candidates_with_elevations, cropped_elevation_array, cropped_array_top_left_indices \
      = find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound)
 
+    # 2. filter remaining candidates by checking obstructions to the west
+    for candidate in candidates_with_elevations:
+        # If the elements are obstructed, remove them from the candidates list
+        if not check_obstructions_west(candidate, cropped_elevation_array):
+            candidates_with_elevations.remove(candidate)
+            print candidate
+
+    # Compute all scores (elevation is already a score)
     # All scores are stored in a list
+
+    # Create new list to store all the scores
     candidates_with_all_scores = []
-    # Adding cliff score to candidate_point tuple
-    for candidate_point in coordinates_with_elevations:
+
+    # Add cliff score to candidate_point tuple
+    for candidate_point in candidates_with_elevations:
 
         cliff_score = check_candidate_dropoff(candidate_point, cropped_elevation_array)
 
         candidates_with_all_scores.append((candidate_point[0], [candidate_point[1], cliff_score]))
     
-    # Rank here - rank function only returns top 100
+    # Rank points - rank function only returns top 100
     ranked_points = rank_candidate_points(candidates_with_all_scores)
     print "First 100 candidate points sorted by rank"
     print ranked_points
 
-    # Check obstructions west
-    n_points_latlongs = []
-
-    # print "N bound, W bound"
-    # print elevation_array_n_bound, elevation_array_w_bound
-    print "Pins with elevation"
-    for point in ranked_points:
-
-        if check_obstructions_west(point, cropped_elevation_array) and len(n_points_latlongs) < n:
-            n_points_latlongs.append(point[0])
-            print point
-
+    # Finally, convert these last points to latlongs
     final_latlongs = []
 
-    # Convert n points to latlongs
-    for final_point in n_points_latlongs:
+    # Convert n ranked points to latlongs
+    for final_point in ranked_points[:n]:
 
-        final_latlongs.append(convert_to_latlong(final_point, elevation_array_n_bound, elevation_array_w_bound, cropped_array_top_left_indices))
+        final_latlongs.append(convert_to_latlong(final_point[0], elevation_array_n_bound, elevation_array_w_bound, cropped_array_top_left_indices))
 
     print "N POINTS"
     print final_latlongs
     return final_latlongs
 
-pick_n_best_points((36.79, -117.05), 38.00166666667, -118.0016666667)
+# pick_n_best_points((36.79, -117.05), 38.00166666667, -118.0016666667)
 # generate_surrounding_filenames((37.7749, 122.4194))
 
 
