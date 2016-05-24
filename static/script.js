@@ -4,16 +4,20 @@ $(document).ready(function () {
     // function initialize() {
 
     var mapProp = {
-      center:new google.maps.LatLng(37.7749,-122.4194),
+      center: new google.maps.LatLng(37.7749,-122.4194),
       zoom:10,
       mapTypeId:google.maps.MapTypeId.ROADMAP
-
     };
 
-    // keep track of markers on the map
-    var markers = []
-
     var map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+
+    // if geolocation can obtain location from browser, center map on user location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (position) {
+        initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+        map.setCenter(initialLocation);
+      });
+    }
 
     // playing with map styling
       map.set('styles', [
