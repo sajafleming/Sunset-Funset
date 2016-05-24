@@ -12,24 +12,24 @@ body {
 
 form {
     font-size: 20px;
-    color: white;
+    color: black;
     text-align: center;
-    font-family: Courier;
+    font-family: Verdana;
 }
 
-.radio {
+/*.radio {
     font-size: 20px;
     color: white;
     text-align: center;
     font-family: Courier;
-}
+}*/
 
 #googleMap {
     margin: auto;
 }
 
 #user-location {
-    height: 25px;
-    width: 250px;
+    height: 30px;
+    width: 350px;
     font-size:14pt;
 }
