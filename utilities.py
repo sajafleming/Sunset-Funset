@@ -14,8 +14,25 @@ DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
 
 DEGREES_PER_INDEX = 0.0002777777777685509
 
-# add comment
+# The .img files have an overlap of approx. 11.999999880419653 indices 
 OVERLAPPING_INDICES = 12
+
+
+def validate_location_for_search(latlong):
+    """Test to see if the user entered a location that is out of the range of 
+    data for this app (out of the US).
+
+    If the filepath does not exist, then there is no data for that area.
+    """
+
+    filename, n, w = find_filename(latlong)
+
+    filepath = create_filepath(filename)
+
+    if os.path.isfile(filepath):
+        return True
+    else:
+        return False
 
 
 def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound, user_radius=20, n=15):
@@ -41,21 +58,17 @@ def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound
     candidates_with_elevations, cropped_elevation_array, cropped_array_top_left_indices \
      = find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound, radius)
 
-
-    # 2. filter remaining candidates by checking obstructions to the west
-    #candidates_with_elevations = [candidate for candidate in candidates_with_elevations if is_unobstructed_west(candidate, cropped_elevation_array)]
-    # for candidate in candidates_with_elevations:
-    #     # If the elements are obstructed, remove them from the candidates list
-    #     if not is_unobstructed_west(candidate, cropped_elevation_array):
-    #         candidates_with_elevations.remove(candidate)
-    #         print candidate
-
     # Compute all scores (elevation is already a score)
     # All scores are stored in a list
+
+    # 2. filter remaining candidates  using list comprehension by checking obstructions to the west
+    candidates_with_elevations = [candidate for candidate in candidates_with_elevations if is_unobstructed_west(candidate, cropped_elevation_array)]
 
     print "Num candidates after obstruction filtering = {}".format(len(candidates_with_elevations))
     # Create new list to store all the scores
     candidates_with_all_scores = []
+
+    # TODO: PUT ELEVATION SCORE HERE: ELEVATION SCORE IS RELATIVE ELEVATION
 
     # Add cliff score to candidate_point tuple
     for candidate_point in candidates_with_elevations:
@@ -80,6 +93,9 @@ def pick_n_best_points(latlong, elevation_array_n_bound, elevation_array_w_bound
     print "N POINTS"
     print final_latlongs
     return final_latlongs
+
+# pick_n_best_points((36.79, -117.05), 38.00166666667, -118.0016666667)
+
 
 
 def create_elevation_array(latlong, img_file_root=DEFAULT_IMG_FILE_ROOT):
@@ -142,7 +158,7 @@ def convert_radius_to_number_of_indices(user_radius):
     print "AHHHH"
     print radius
 
-    return radius
+    return radiu
 
 
 def find_filename(latlong):
@@ -167,153 +183,6 @@ def find_filename(latlong):
 
     print filename, n, w
     return filename, n, w 
-
-# TODO: split this funtion into two functions. One that just returns n and w and 
-# one that generates the file name. This will get rid of repetition below
-
-def validate_location_for_search(latlong):
-    """Test to see if the user entered a location that is out of the range of 
-    data for this app (out of the US).
-
-    If the filepath does not exist, then there is no data for that area.
-    """
-
-    filename, n, w = find_filename(latlong)
-
-    filepath = create_filepath(filename)
-
-    if os.path.isfile(filepath):
-        return True
-    else:
-        return False
-    
-def create_filename(n, w):
-    """Given integer n and w coordinates, create a filename string"""
-
-    return "n%sw%s.img" % (n, w)
-
-def create_filepath(filename):
-    """Create filepath for a given .img file"""
-
-    return DEFAULT_IMG_FILE_ROOT + filename
-
-
-def generate_surrounding_filenames(latlong):
-    """Generate dictionary of filenames for the surrounding data for a given 
-    latlong.
-
-    The key of the dictionary represents where that tile is located in terms of
-    the center tile (the tile that contains the original latlong).
-    """
-
-    filename, n, w = find_filename(latlong)
-
-    filenames = ({ "NW": create_filename(n + 1, w + 1),
-                   "N": create_filename(n + 1, w),
-                   "NE": create_filename(n + 1, w - 1),
-                   "W": create_filename(n, w + 1),
-                   "C": create_filename(n, w),
-                   "E": create_filename(n, w - 1),
-                   "SW": create_filename(n - 1, w + 1),
-                   "S": create_filename(n - 1, w),
-                   "SE": create_filename(n - 1, w - 1)})
-
-    return filenames
-
-
-def read_img_file(filepath):
-    """Read .img file as 2D numpy array given a filepath. 
-
-    The .img files are raster data. The osgeo library provides a way to 
-    open these files and read them as a numpy 2D array.
-
-    Each array of 1 arc second should have dimensions 3612 x 3612. 
-    """
-
-    geo = gdal.Open(filepath)
-   
-    arr = geo.ReadAsArray()
-
-    return arr
-
-
-
-# sample from database
-# | filename |     w_bound     |     e_bound     |    n_bound     |    s_bound
-# | n38w118  | -118.0016666667 | -116.9983333333 | 38.00166666667 | 36.99833333333
-
-def find_coordinates(latlong, elevation_array_n_bound, elevation_array_w_bound):
-    """Find index for elevation array of a given latlong.
-
-    The indices will be calculated with the exact N and W bounds from the database. 
-    DEGREES_PER_INDEX is calculated by taking the difference of NS (or EW) bounds
-    and dividing 3612 (the length and width of a single file). DEGREES_PER_INDEX
-    is calculated to be 0.0002777777777685509.
-    """
-
-    lat = latlong[0]
-    lng = latlong[1]
-
-    # check absolute values 
-    y_index = int(round(abs((elevation_array_n_bound - lat) / DEGREES_PER_INDEX)))
-    x_index = int(round(abs((elevation_array_w_bound - lng) / DEGREES_PER_INDEX)))
-
-    return (y_index, x_index)
-
-# create_elevation_array((32.0005,116.9999))
-# /Users/Sarah/PROJECT/imgfiles/n33w117.img
-
-# RADIUS = 1073 / 2
-
-def crop_elevation_array(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound, radius):
-    """Crop the elevation_data_array to approximately a 20 mile radius (1073 entries:
-    each index represents approximately .0186411357696567 miles)
-    around the given latlong.
-
-    The latlong the user entered will be the center of the radius. The values of 
-    the 2D array within the radius will remain their original value and the values 
-    outside of the radius will be changed to -1000, an arbitrary low number.
-    This is done using a mask. An array just outside this radius will be returned 
-    along with the NW (top left) coordinate of the new array. The radius array 
-    dimensions will be 2146 x 2146.
-    """
-
-    # Coordinates for user entered point in terms of master array
-    y_index, x_index = find_coordinates(latlong, elevation_array_n_bound, elevation_array_w_bound)
-    #print "COORDINATES:"
-    #print y_index, x_index
-
-    n = len(elevation_array)
-    # r = radius
-
-    # TODO: comment this
-    # y,x = np.ogrid[-y_index:n-y_index, -x_index:n-x_index]
-    # mask = x**2 + y**2 > radius**2
-
-    # elevation_array[mask] = -1000
-
-    # Creating the box around the radius by setting a beginning and ending point
-    y_begin = max(y_index - radius, 0)
-    y_end = y_index + radius + 1
-    x_begin = max(x_index - radius, 0)
-    x_end = x_index + radius + 1
-   
-    cropped_elevation_array = elevation_array[y_begin:y_end, x_begin:x_end]
-
-    cropped_array_top_left_indices = (y_begin, x_begin)
-
-    # Find the postion of the user's latlong by offesetting the cropped array
-    user_latlong_coordinates_cropped = (y_index - y_begin, x_index - x_begin)
-
-    #print "CROP INCICES:"
-    #print x_begin, x_end, y_begin, y_end
-
-    #print "TOP LEFT COORDINATES:"
-    # print cropped_elevation_array
-    #print cropped_array_top_left_indices
-    return cropped_elevation_array, cropped_array_top_left_indices, user_latlong_coordinates_cropped
-
-# crop_elevation_array((32.0005,116.9999))
 
 
 def find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound, radius):
@@ -375,56 +244,6 @@ def find_local_maxima(latlong, elevation_array, elevation_array_n_bound, elevati
 
 # find_local_maxima((36.79, -117.05))
 
-# use for testing
-# BOUNDING_BOX_WIDTH = 50
-
-# USE ME
-BOUNDING_BOX_WIDTH = 100
-
-def is_local_maximum(candidate_point, cropped_elevation_array):
-    """Check to see if realative maximum is realative max over an area of FIXME
-
-    10 indices for now
-    """
-
-    rows_lower_bound = -(BOUNDING_BOX_WIDTH / 2) + candidate_point[0]
-    rows_upper_bound = candidate_point[0] + (BOUNDING_BOX_WIDTH / 2)
-    column_lower_bound = -(BOUNDING_BOX_WIDTH / 2) + candidate_point[1]
-    column_upper_bound = candidate_point[1] + (BOUNDING_BOX_WIDTH / 2)
-
-    rows_for_checking_start = max((rows_lower_bound), 0)
-    rows_for_checking_end = min(rows_upper_bound, len(cropped_elevation_array))
-    columns_for_checking_start = max(column_lower_bound, 0) 
-    columns_for_checking_end = min(column_upper_bound, len(cropped_elevation_array))
-
-    # maybe change the following by passing the elevation with the candidate point?
-    candidate_elevation = elevation_by_indices(candidate_point, cropped_elevation_array) 
-
-    # TODO: comment and doc string
-    for row in range(rows_for_checking_start, rows_for_checking_end):
-        for column in range(columns_for_checking_start, columns_for_checking_end):
-
-            # If the elevation of a point is greater than the elevation for the 
-            # candidate point, return False meaning the candidate point will be 
-            # thrown out as a local maxima. 
-            if cropped_elevation_array[row][column] > candidate_elevation:
-                return False
-    
-    return True
-
-
-def elevation_by_indices(coordinates, cropped_elevation_array):
-    """Search the cropped_elevation_array by coordinates and return the elevation 
-    at that point.
-
-    [row, column]
-    """
-
-    elevation = cropped_elevation_array[coordinates[0], coordinates[1]]
-
-    # print "elevation is %s" % (elevation)
-    return elevation
-
 
 # for testing
 # CHECK_WEST = 100
@@ -462,6 +281,7 @@ def is_unobstructed_west(candidate_point, cropped_elevation_array):
                 return False
 
     return True
+
 
 ROWS_FOR_DROPOFF = 5
 COLUMNS_FOR_DROPOFF = 5
@@ -578,9 +398,183 @@ def convert_to_latlong(coordinate, elevation_array_n_bound, elevation_array_w_bo
     return (lat_final, long_final)
 
 
+def generate_surrounding_filenames(latlong):
+    """Generate dictionary of filenames for the surrounding data for a given 
+    latlong.
+
+    The key of the dictionary represents where that tile is located in terms of
+    the center tile (the tile that contains the original latlong).
+    """
+
+    filename, n, w = find_filename(latlong)
+
+    filenames = ({ "NW": create_filename(n + 1, w + 1),
+                   "N": create_filename(n + 1, w),
+                   "NE": create_filename(n + 1, w - 1),
+                   "W": create_filename(n, w + 1),
+                   "C": create_filename(n, w),
+                   "E": create_filename(n, w - 1),
+                   "SW": create_filename(n - 1, w + 1),
+                   "S": create_filename(n - 1, w),
+                   "SE": create_filename(n - 1, w - 1)})
+
+    return filenames
 
 
+def read_img_file(filepath):
+    """Read .img file as 2D numpy array given a filepath. 
 
-# pick_n_best_points((36.79, -117.05), 38.00166666667, -118.0016666667)
+    The .img files are raster data. The osgeo library provides a way to 
+    open these files and read them as a numpy 2D array.
 
+    Each array of 1 arc second should have dimensions 3612 x 3612. 
+    """
+
+    geo = gdal.Open(filepath)
+   
+    arr = geo.ReadAsArray()
+
+    return arr
+
+# RADIUS = 1073 / 2
+
+def crop_elevation_array(latlong, elevation_array, elevation_array_n_bound, elevation_array_w_bound, radius):
+    """Crop the elevation_data_array to approximately a 20 mile radius (1073 entries:
+    each index represents approximately .0186411357696567 miles)
+    around the given latlong.
+
+    The latlong the user entered will be the center of the radius. The values of 
+    the 2D array within the radius will remain their original value and the values 
+    outside of the radius will be changed to -1000, an arbitrary low number.
+    This is done using a mask. An array just outside this radius will be returned 
+    along with the NW (top left) coordinate of the new array. The radius array 
+    dimensions will be 2146 x 2146.
+    """
+
+    # Coordinates for user entered point in terms of master array
+    y_index, x_index = find_coordinates(latlong, elevation_array_n_bound, elevation_array_w_bound)
+    #print "COORDINATES:"
+    #print y_index, x_index
+
+    n = len(elevation_array)
+    # r = radius
+
+    # TODO: comment this
+    # y,x = np.ogrid[-y_index:n-y_index, -x_index:n-x_index]
+    # mask = x**2 + y**2 > radius**2
+
+    # elevation_array[mask] = -1000
+
+    # Creating the box around the radius by setting a beginning and ending point
+    y_begin = max(y_index - radius, 0)
+    y_end = y_index + radius + 1
+    x_begin = max(x_index - radius, 0)
+    x_end = x_index + radius + 1
+   
+    cropped_elevation_array = elevation_array[y_begin:y_end, x_begin:x_end]
+
+    cropped_array_top_left_indices = (y_begin, x_begin)
+
+    # Find the postion of the user's latlong by offesetting the cropped array
+    user_latlong_coordinates_cropped = (y_index - y_begin, x_index - x_begin)
+
+    #print "CROP INCICES:"
+    #print x_begin, x_end, y_begin, y_end
+
+    #print "TOP LEFT COORDINATES:"
+    # print cropped_elevation_array
+    #print cropped_array_top_left_indices
+    return cropped_elevation_array, cropped_array_top_left_indices, user_latlong_coordinates_cropped
+
+# crop_elevation_array((32.0005,116.9999))
+
+
+def elevation_by_indices(coordinates, cropped_elevation_array):
+    """Search the cropped_elevation_array by coordinates and return the elevation 
+    at that point.
+
+    [row, column]
+    """
+
+    elevation = cropped_elevation_array[coordinates[0], coordinates[1]]
+
+    # print "elevation is %s" % (elevation)
+    return elevation
+
+
+# use for testing
+# BOUNDING_BOX_WIDTH = 50
+
+# USE ME
+BOUNDING_BOX_WIDTH = 100
+
+def is_local_maximum(candidate_point, cropped_elevation_array):
+    """Check to see if realative maximum is realative max over an area of FIXME
+
+    10 indices for now
+    """
+
+    rows_lower_bound = -(BOUNDING_BOX_WIDTH / 2) + candidate_point[0]
+    rows_upper_bound = candidate_point[0] + (BOUNDING_BOX_WIDTH / 2)
+    column_lower_bound = -(BOUNDING_BOX_WIDTH / 2) + candidate_point[1]
+    column_upper_bound = candidate_point[1] + (BOUNDING_BOX_WIDTH / 2)
+
+    rows_for_checking_start = max((rows_lower_bound), 0)
+    rows_for_checking_end = min(rows_upper_bound, len(cropped_elevation_array))
+    columns_for_checking_start = max(column_lower_bound, 0) 
+    columns_for_checking_end = min(column_upper_bound, len(cropped_elevation_array))
+
+    # maybe change the following by passing the elevation with the candidate point?
+    candidate_elevation = elevation_by_indices(candidate_point, cropped_elevation_array) 
+
+    # TODO: comment and doc string
+    for row in range(rows_for_checking_start, rows_for_checking_end):
+        for column in range(columns_for_checking_start, columns_for_checking_end):
+
+            # If the elevation of a point is greater than the elevation for the 
+            # candidate point, return False meaning the candidate point will be 
+            # thrown out as a local maxima. 
+            if cropped_elevation_array[row][column] > candidate_elevation:
+                return False
+    
+    return True
+
+    
+
+def create_filename(n, w):
+    """Given integer n and w coordinates, create a filename string"""
+
+    return "n%sw%s.img" % (n, w)
+
+
+# sample from database
+# | filename |     w_bound     |     e_bound     |    n_bound     |    s_bound
+# | n38w118  | -118.0016666667 | -116.9983333333 | 38.00166666667 | 36.99833333333
+
+def find_coordinates(latlong, elevation_array_n_bound, elevation_array_w_bound):
+    """Find index for elevation array of a given latlong.
+
+    The indices will be calculated with the exact N and W bounds from the database. 
+    DEGREES_PER_INDEX is calculated by taking the difference of NS (or EW) bounds
+    and dividing 3612 (the length and width of a single file). DEGREES_PER_INDEX
+    is calculated to be 0.0002777777777685509.
+    """
+
+    lat = latlong[0]
+    lng = latlong[1]
+
+    # check absolute values 
+    y_index = int(round(abs((elevation_array_n_bound - lat) / DEGREES_PER_INDEX)))
+    x_index = int(round(abs((elevation_array_w_bound - lng) / DEGREES_PER_INDEX)))
+
+    return (y_index, x_index)
+
+# /Users/Sarah/PROJECT/imgfiles/n33w117.img
+
+
+# currently not used
+def create_filepath(filename):
+    """Create filepath for a given .img file"""
+
+    return DEFAULT_IMG_FILE_ROOT + filename
 
