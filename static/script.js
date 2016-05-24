@@ -6,12 +6,40 @@ $(document).ready(function () {
     var mapProp = {
       center:new google.maps.LatLng(37.7749,-122.4194),
       zoom:10,
-      mapTypeId:google.maps.MapTypeId.TERRAIN
+      mapTypeId:google.maps.MapTypeId.ROADMAP
+
     };
+
     var map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+
+    // playing with map styling
+      map.set('styles', [
+        {
+          featureType: 'water',
+          elementType: 'geometry',
+          stylers: [
+            { color: '#a3d2fe' },
+            { weight: 1.6 }
+          ]
+        }, {
+          featureType: "road.highway",
+          elementType: "geometry",
+          stylers: [
+            { color: "#fbe87d" },
+            { weight: 1 }
+          ]
+        }, { 
+          featureType: "landscape", 
+          elementType: "geometry", 
+          stylers: [ 
+            { hue: "#eceae4" }, 
+          ] 
+        } 
+      ]); 
     
     var geocoder = new google.maps.Geocoder();
 
+    // TODO: rewrite in jquery
     document.getElementById('user-input-form').addEventListener('submit', function(evt) {
       evt.preventDefault()
       geocodeAddress(geocoder, map);
@@ -20,17 +48,6 @@ $(document).ready(function () {
       geocodeAddress(geocoder, map);
     });
 
-
-    // bias search results toward area
-    // TODO: change to bias based on the user's browser
-    var defaultBounds = new google.maps.LatLngBounds(
-      // new google.maps.LatLng(37.1, -95.7)
-      new google.maps.LatLng(37.1, -95.7));
-
-    var options = {
-      bounds: defaultBounds
-    }
-
     // Get the HTML input element for the autocomplete search box
     var input = document.getElementById('user-location');
     //google.maps.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
@@ -38,14 +55,28 @@ $(document).ready(function () {
     // Create the autocomplete object
     var autocomplete = new google.maps.places.Autocomplete(input, options);
 
+    // Add event listener for when someone types in the text box
     google.maps.event.addListener(autocomplete, "place_changed", function(evt) {
       geocodeAddress(geocoder, map);
     });
 
-
-  
-    // }
-    // google.maps.event.addDomListener(window, 'load', initialize);
+    // Bias the autocomplete object to the user's geographical location,
+    // as supplied by the browser's 'navigator.geolocation' object.
+    function geolocate() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          var geolocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          var circle = new google.maps.Circle({
+            center: geolocation,
+            radius: position.coords.accuracy
+          });
+          autocomplete.setBounds(circle.getBounds());
+        });
+      }
+    }    
 
     function geocodeAddress(geocoder, resultsMap) {
       console.log('hi!')
@@ -70,26 +101,24 @@ $(document).ready(function () {
           //   dataType: "json"
           // });
 
-          var params = {"lat": lat, "lng": lng};
+          // get the lat and long that the user entered and the radius
+          var params = {"lat": lat, "lng": lng, 
+            "radio": $('input[name=radius]:checked').val()};
           $.get("/sunset-spots", params, plotSunsetSpots);
 
           // put inside success function
           var marker = new google.maps.Marker({
             map: resultsMap,
             position: results[0].geometry.location
-            // console.log(results[0].geometry);
-
           });
 
-
-
-        }  else {
+        } else {
           alert('Geocode was not successful for the following reason: ' + status);
-        }
+          }
+    });
+  }
 
-      });
-    }
-
+      // function to plot the returned sunset spot data
       function plotSunsetSpots(data) {
         // data is a dictionary equal to what the /sunset-spots route constructed
         // pull out top sunset spots
@@ -117,42 +146,36 @@ $(document).ready(function () {
 
       console.log(myLatLng);
       console.log(map);
-             
+
+      // sun image
+
+      // fix location of this pin
+      // var icon = {
+      // url: "http://oi63.tinypic.com/2b8sv6.jpg", // url
+      // scaledSize: new google.maps.Size(100, 100), // scaled size
+      // origin: new google.maps.Point(50, 50), // origin
+      // anchor: new google.maps.Point(50, 50) // anchor
+      // };
+
+      // below didn't work
+      // var image = {
+      // url: "http://oi63.tinypic.com/2b8sv6.jpg" ,
+      // size: new google.maps.Size(200, 300),
+      // origin: new google.maps.Point(0, 0),
+      // anchor: new google.maps.Point(0, 32),
+      // scaledSize: new google.maps.Size(10, 10)
+      // };
+
+      // var image = "http://oi63.tinypic.com/2b8sv6.jpg"       
       var marker = new google.maps.Marker({
               position: myLatLng,
-              map: map
+              map: map,
+              // icon: icon
       });
-      // marker.setVisible(true);
-      // marker.setMap(this.map);
     }
 
 
 });
 
 
-// TODO: figure out whether to use country restriction or bias to the user's location 
-// based on their browsers location
-
-// var input = document.getElementById('pac-input');
-// var options = {
-//   componentRestrictions: {country: 'us'}
-// };
-
-// Bias the autocomplete object to the user's geographical location,
-// as supplied by the browser's 'navigator.geolocation' object.
-// function geolocate() {
-//   if (navigator.geolocation) {
-//     navigator.geolocation.getCurrentPosition(function(position) {
-//       var geolocation = {
-//         lat: position.coords.latitude,
-//         lng: position.coords.longitude
-//       };
-//       var circle = new google.maps.Circle({
-//         center: geolocation,
-//         radius: position.coords.accuracy
-//       });
-//       autocomplete.setBounds(circle.getBounds());
-//     });
-//   }
-// }
 
