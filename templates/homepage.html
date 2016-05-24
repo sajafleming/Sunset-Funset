@@ -1,19 +1,29 @@
-{% extends 'base.html' %}
+<!doctype html>
+<html>
+<head>
+    <title>Sunset Funset</title>
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="../static/style.css">
+    <!-- Jquery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- JavaScript code for the Maps API is loaded via a bootstrap URL 
+    <script src="http://maps.googleapis.com/maps/api/js"></script>-->
+    <!--  Google Places library, key required -->
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC0YC5Rhn9N2POBLcNsZS5K8agul4zq6vw&libraries=places"></script>
+    <!-- My javascript code -->
+    <script src="../static/script.js"></script>
+    <!-- Bootstrap link -->
+   <!--  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"> -->
+   <!-- Favicon link -->
+   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
 
-{% block content %}
+<body>
+    <form id="user-input-form">
+        Enter a location: <input type="text" name="user-location" id="user-location">
+        <input type="submit" value="Search" id="submit-location">
+    </form>
 
-<form id="user-input-form">
-    Enter a location: <input type="text" name="user-location" id="user-location">
-    <input type="submit" value="Search" id="submit-location">
-</form>
-
-<div id="googleMap" style="width:1000px;height:500px;"></div>
-
-<script>
-// $("#submit-location").click(function() {
-//     console.log($(this));
-//   $(this).show();
-// });
-</script>
-
-{% endblock %}
+    <div id="googleMap" style="width:1000px;height:500px;"></div>
+</body>
+</html>
