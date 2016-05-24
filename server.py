@@ -2,7 +2,7 @@
 
 from jinja2 import StrictUndefined
 from flask import Flask, render_template, redirect, request, flash, session, jsonify
-from utilities import find_tile_name, create_filename, pick_n_best_points, validate_location_for_search
+from utilities import find_filename, create_filename, pick_n_best_points, validate_location_for_search
 # from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
 from model import connect_to_db, db, LatLong
@@ -33,6 +33,10 @@ def find_points():
     lat = float(request.args.get("lat"))
     lng = float(request.args.get("lng"))
 
+    radius = request.args.get("radio")
+    print "HELLO" * 5
+    print radius
+
     latlong = (lat, lng)
 
     print "\n"
@@ -42,7 +46,7 @@ def find_points():
     if validate_location_for_search(latlong):
 
         
-        filename_of_original_latlong, n, w = find_tile_name(latlong)
+        filename_of_original_latlong, n, w = find_filename(latlong)
         print filename_of_original_latlong
         top_left_filename = create_filename(n + 1, w + 1) # want to add 1 to w here because filename represented as positive
         print "#############################################"
@@ -58,7 +62,7 @@ def find_points():
 
         # call into utilities functions to get list of lat and longs for best sunset spots
 
-        n_sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound)
+        n_sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound, radius)
         
         # return JSON containing a list of lat/lng of best sunset spots
 
