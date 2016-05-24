@@ -10,6 +10,9 @@ $(document).ready(function () {
 
     };
 
+    // keep track of markers on the map
+    var markers = []
+
     var map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
 
     // playing with map styling
@@ -40,25 +43,45 @@ $(document).ready(function () {
     var geocoder = new google.maps.Geocoder();
 
     // TODO: rewrite in jquery
+    // takes input from the form on the "submit"
+    // document.getElementById('user-input-form').addEventListener('submit', function(evt) {
+    //   // evt.preventDefault()
+    //   geocodeAddress(geocoder, map);
+    // });
+
     document.getElementById('user-input-form').addEventListener('submit', function(evt) {
       evt.preventDefault()
       geocodeAddress(geocoder, map);
     });
-    document.getElementById('user-location').addEventListener('submit', function(evt) {
+    document.getElementById('user-textbox').addEventListener('submit', function(evt) {
       geocodeAddress(geocoder, map);
     });
+
+    // need to create a list of markers so I can clear
+    // document.getElementById('user-input-form').addEventListener('submit', function(evt) {
+    //   while (markers.length > 0) {
+    //     markers.pop().setMap(null);
+    //   }
+    //   markers.length = 0;
+    // });
 
     // Get the HTML input element for the autocomplete search box
-    var input = document.getElementById('user-location');
-    //google.maps.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+    // var input = document.getElementById('user-textbox');
+    var input = $('#user-textbox')[0]
 
     // Create the autocomplete object
-    var autocomplete = new google.maps.places.Autocomplete(input, options);
+    var autocomplete = new google.maps.places.Autocomplete(input);
 
-    // Add event listener for when someone types in the text box
-    google.maps.event.addListener(autocomplete, "place_changed", function(evt) {
-      geocodeAddress(geocoder, map);
+    // Clears textbox when user starts typing
+    $('input:text').focus(
+    function(){
+        $(this).val('');
     });
+
+    // Add event listener for when someone clicks on an autocompleted suggestion
+    // google.maps.event.addListener(autocomplete, "place_changed", function(evt) {
+    //   geocodeAddress(geocoder, map);
+    // });
 
     // Bias the autocomplete object to the user's geographical location,
     // as supplied by the browser's 'navigator.geolocation' object.
@@ -80,7 +103,7 @@ $(document).ready(function () {
 
     function geocodeAddress(geocoder, resultsMap) {
       console.log('hi!')
-      var address = document.getElementById('user-location').value;
+      var address = $('#user-textbox').val()
       geocoder.geocode({'address': address}, function(results, status) {
         console.log(results)
         if (status === google.maps.GeocoderStatus.OK) {
@@ -94,19 +117,12 @@ $(document).ready(function () {
           lat = results[0].geometry.location.lat()
           lng = results[0].geometry.location.lng()
 
-          // Do ajax request with lat and lng
-          // $.ajax({
-          //   url: "sunset-spots?lat=" + lat + "&lng=" + lng,
-          //   success: plotSunsetSpots,
-          //   dataType: "json"
-          // });
-
           // get the lat and long that the user entered and the radius
           var params = {"lat": lat, "lng": lng, 
             "radio": $('input[name=radius]:checked').val()};
           $.get("/sunset-spots", params, plotSunsetSpots);
 
-          // put inside success function
+          // plot the original point
           var marker = new google.maps.Marker({
             map: resultsMap,
             position: results[0].geometry.location
@@ -122,9 +138,8 @@ $(document).ready(function () {
       function plotSunsetSpots(data) {
         // data is a dictionary equal to what the /sunset-spots route constructed
         // pull out top sunset spots
-        // console.log(data);
+
         var sunsetCoordinates = data.results;
-        // console.log(sunsetCoordinates);
 
         length = sunsetCoordinates.length;
         
@@ -133,40 +148,24 @@ $(document).ready(function () {
 
           var myLatLng = {lat: sunsetCoordinates[i][0], lng: sunsetCoordinates[i][1]};
 
-          // var marker = new google.maps.Marker({
-          //     map: this.map,
-          //     position: myLatLng
-          //   });
-
           addMarker(myLatLng);
         }
       }
+
 
     function addMarker(myLatLng) {
 
       console.log(myLatLng);
       console.log(map);
 
-      // sun image
-
-      // fix location of this pin
+      // TODO: fix location of this pin
       // var icon = {
       // url: "http://oi63.tinypic.com/2b8sv6.jpg", // url
       // scaledSize: new google.maps.Size(100, 100), // scaled size
       // origin: new google.maps.Point(50, 50), // origin
       // anchor: new google.maps.Point(50, 50) // anchor
       // };
-
-      // below didn't work
-      // var image = {
-      // url: "http://oi63.tinypic.com/2b8sv6.jpg" ,
-      // size: new google.maps.Size(200, 300),
-      // origin: new google.maps.Point(0, 0),
-      // anchor: new google.maps.Point(0, 32),
-      // scaledSize: new google.maps.Size(10, 10)
-      // };
-
-      // var image = "http://oi63.tinypic.com/2b8sv6.jpg"       
+      
       var marker = new google.maps.Marker({
               position: myLatLng,
               map: map,
@@ -174,8 +173,4 @@ $(document).ready(function () {
       });
     }
 
-
 });
-
-
-
