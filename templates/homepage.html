@@ -13,7 +13,7 @@
     <!-- My javascript code -->
     <script src="../static/script.js"></script>
     <!-- Bootstrap link -->
-   <!--  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"> -->
+  <!--   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"> -->
    <!-- Favicon link -->
    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
@@ -21,7 +21,13 @@
 <body>
     <form id="user-input-form">
         Enter a location: <input type="text" name="user-location" id="user-location">
-        <input type="submit" value="Search" id="submit-location">
+        <input type="submit" value="Search" id="submit-location"><br>
+
+        <input type="radio" class="radio" name="radius" value="1"> 1 mile<br>
+        <input type="radio" class="radio" name="radius" value="2"> 2 miles<br>
+        <input type="radio" class="radio" name="radius" value="5"> 5 miles<br>
+        <input type="radio" class="radio" name="radius" value="10" checked="checked"> 10 miles<br>
+        <input type="radio" class="radio" name="radius" value="20"> 20 miles<br>
     </form>
 
     <div id="googleMap" style="width:1000px;height:500px;"></div>
