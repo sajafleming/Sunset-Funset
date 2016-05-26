@@ -9,55 +9,61 @@ $(document).ready(function () {
       mapTypeId:google.maps.MapTypeId.ROADMAP
     };
 
-    var map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+    // new google maps object
+    var map = new google.maps.Map($("#googleMap")[0], mapProp);
+    var markers = [];
 
+    // document.getElementById("googleMap") $("#googleMap")
     // if geolocation can obtain location from browser, center map on user location
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function (position) {
+        navigator.geolocation.getCurrentPosition(function (position) {
         initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
         map.setCenter(initialLocation);
       });
     }
 
     // playing with map styling
-      map.set('styles', [
-        {
-          featureType: 'water',
-          elementType: 'geometry',
-          stylers: [
-            { color: '#a3d2fe' },
-            { weight: 1.6 }
-          ]
-        }, {
-          featureType: "road.highway",
-          elementType: "geometry",
-          stylers: [
-            { color: "#fbe87d" },
-            { weight: 1 }
-          ]
-        }, { 
-          featureType: "landscape", 
-          elementType: "geometry", 
-          stylers: [ 
-            { hue: "#eceae4" }, 
-          ] 
-        } 
-      ]); 
+    map.set('styles', [
+      {
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [
+          { color: '#a3d2fe' },
+          { weight: 1.6 }
+        ]
+      }, {
+        featureType: "road.highway",
+        elementType: "geometry",
+        stylers: [
+          { color: "#fbe87d" },
+          { weight: 1 }
+        ]
+      }, { 
+        featureType: "landscape", 
+        elementType: "geometry", 
+        stylers: [ 
+          { hue: "#eceae4" }, 
+        ] 
+      } 
+    ]); 
     
+    // new google maps geocoder object
     var geocoder = new google.maps.Geocoder();
 
-    // TODO: rewrite in jquery
-    // takes input from the form on the "submit"
     // document.getElementById('user-input-form').addEventListener('submit', function(evt) {
-    //   // evt.preventDefault()
+    //   evt.preventDefault()
+    //   geocodeAddress(geocoder, map);
+    // });
+    // document.getElementById('user-textbox').addEventListener('submit', function(evt) {
     //   geocodeAddress(geocoder, map);
     // });
 
-    document.getElementById('user-input-form').addEventListener('submit', function(evt) {
+    // rewrote above in jquery
+    $('#user-input-form').submit(function(evt) {
       evt.preventDefault()
       geocodeAddress(geocoder, map);
     });
-    document.getElementById('user-textbox').addEventListener('submit', function(evt) {
+    $('#user-textbox').submit(function(evt) {
       geocodeAddress(geocoder, map);
     });
 
@@ -77,15 +83,9 @@ $(document).ready(function () {
     var autocomplete = new google.maps.places.Autocomplete(input);
 
     // Clears textbox when user starts typing
-    $('input:text').focus(
-    function(){
-        $(this).val('');
+    $('input:text').focus(function(evt) {
+      $(this).val('');
     });
-
-    // Add event listener for when someone clicks on an autocompleted suggestion
-    // google.maps.event.addListener(autocomplete, "place_changed", function(evt) {
-    //   geocodeAddress(geocoder, map);
-    // });
 
     // Bias the autocomplete object to the user's geographical location,
     // as supplied by the browser's 'navigator.geolocation' object.
@@ -106,15 +106,13 @@ $(document).ready(function () {
     }    
 
     function geocodeAddress(geocoder, resultsMap) {
-      console.log('hi!')
       var address = $('#user-textbox').val()
       geocoder.geocode({'address': address}, function(results, status) {
         console.log(results)
         if (status === google.maps.GeocoderStatus.OK) {
           resultsMap.setCenter(results[0].geometry.location);
-        // ajax call here to get the places where markers should be based on location
 
-          // this is added to get latlong
+          // get the latlong from the user's entered location
           console.log("Lat " + results[0].geometry.location.lat());
           console.log("Lng " + results[0].geometry.location.lng());
 
@@ -135,8 +133,8 @@ $(document).ready(function () {
         } else {
           alert('Geocode was not successful for the following reason: ' + status);
           }
-    });
-  }
+      });
+    }
 
       // function to plot the returned sunset spot data
       function plotSunsetSpots(data) {
@@ -157,24 +155,25 @@ $(document).ready(function () {
       }
 
 
-    function addMarker(myLatLng) {
+      function addMarker(myLatLng) {
 
-      console.log(myLatLng);
-      console.log(map);
+        console.log(myLatLng);
+        console.log(map);
 
-      // TODO: fix location of this pin
+      // TODO: fix location of this custom pin
       // var icon = {
       // url: "http://oi63.tinypic.com/2b8sv6.jpg", // url
       // scaledSize: new google.maps.Size(100, 100), // scaled size
       // origin: new google.maps.Point(50, 50), // origin
       // anchor: new google.maps.Point(50, 50) // anchor
       // };
-      
-      var marker = new google.maps.Marker({
-              position: myLatLng,
-              map: map,
-              // icon: icon
-      });
-    }
+        
+        var marker = new google.maps.Marker({
+                position: myLatLng,
+                map: map,
+                // icon: icon
+        });
+        markers.push(marker);
+      }
 
 });
