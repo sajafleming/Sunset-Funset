@@ -6,6 +6,7 @@ from utilities import find_filename, create_filename, pick_n_best_points, valida
 # from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
 from model import connect_to_db, db, LatLong
+from get_photos import data_to_urls, request_flickr_data
 
 app = Flask(__name__)
 
@@ -66,9 +67,12 @@ def find_points():
         
         # return JSON containing a list of lat/lng of best sunset spots
 
-        # hella = {"1": "you hella cool"}
-        # data = {"results": n_sunset_spots }
-        results = jsonify({"results": n_sunset_spots})
+        # query flickr for pictures
+        data = request_flickr_data(latlong[0], latlong[1], .5)
+        image_urls = data_to_urls(data)
+
+
+        results = jsonify({"results": n_sunset_spots, "PICS": image_urls})
         
         return results
         # return jsonify(hella)
