@@ -13,7 +13,6 @@ $(document).ready(function () {
     var map = new google.maps.Map($("#googleMap")[0], mapProp);
     var markers = [];
 
-    // document.getElementById("googleMap") $("#googleMap")
     // if geolocation can obtain location from browser, center map on user location
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function (position) {
@@ -141,11 +140,21 @@ $(document).ready(function () {
         // data is a dictionary equal to what the /sunset-spots route constructed
         // pull out top sunset spots
 
-        var sunsetCoordinates = data.results;
+        var sunsetPictures = data.pictures;
+        var picturesLength = sunsetPictures.length;
+        // temp adding pics
+        for (var i = 0; i < picturesLength -1; i++) {
+          console.log(sunsetPictures[i])
 
-        length = sunsetCoordinates.length;
+          var pic = data.pictures[i]
+          // $('#pictures').html('<img src="' + pic + '"/>');
+          $('<img src="' + pic + '"/>').appendTo('#pictures');
+        }
+
+        var sunsetCoordinates = data.latlongs;
+        var coordinatesLength = sunsetCoordinates.length;
         
-        for (var i = 0; i < length - 1; i++) {
+        for (var i = 0; i < coordinatesLength - 1; i++) {
           console.log(sunsetCoordinates[i][0], sunsetCoordinates[i][1]);
 
           var myLatLng = {lat: sunsetCoordinates[i][0], lng: sunsetCoordinates[i][1]};
