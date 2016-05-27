@@ -149,17 +149,37 @@ $(document).ready(function () {
           var pic = data.pictures[i]
           // $('#pictures').html('<img src="' + pic + '"/>');
           // $('<img src="' + pic + '"/>').appendTo('#pictures');
-          $('<div class="item"><div class="col-xs-4"><a href="#1"><img src="' + pic + '" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
+          $('<div class="item"><div class="col-xs-4"><a href="#"><img src="' + pic + '"" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
+          // $('<div class="item"><div class="col-xs-4"><a href="#1"><img src="' + pic + '" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
         }
 
-        // Instantiate the Bootstrap carousel
-        $('.multi-item-carousel').carousel({
-        interval: false
-        });
+        // // Instantiate the Bootstrap carousel
+        // $('.multi-item-carousel').carousel({
+        // interval: false
+        // });
 
-        // for every slide in carousel, copy the next slide's item in the slide.
-        // Do the same for the next, next item.
-        $('.multi-item-carousel .item').each(function(){
+        // // for every slide in carousel, copy the next slide's item in the slide.
+        // // Do the same for the next, next item.
+        // $('.multi-item-carousel .item').each(function(){
+        //   var next = $(this).next();
+        //   if (!next.length) {
+        //     next = $(this).siblings(':first');
+        //   }
+        //   next.children(':first-child').clone().appendTo($(this));
+          
+        //   if (next.next().length>0) {
+        //     next.next().children(':first-child').clone().appendTo($(this));
+        //   } else {
+        //     $(this).siblings(':first').children(':first-child').clone().appendTo($(this));
+        //   }
+        // });
+
+
+        $('#myCarousel').carousel({
+          interval: 10000
+        })
+
+        $('.carousel .item').each(function(){
           var next = $(this).next();
           if (!next.length) {
             next = $(this).siblings(':first');
@@ -168,7 +188,8 @@ $(document).ready(function () {
           
           if (next.next().length>0) {
             next.next().children(':first-child').clone().appendTo($(this));
-          } else {
+          }
+          else {
             $(this).siblings(':first').children(':first-child').clone().appendTo($(this));
           }
         });
