@@ -135,21 +135,45 @@ $(document).ready(function () {
       });
     }
 
-      // function to plot the returned sunset spot data
-      function plotSunsetSpots(data) {
-        // data is a dictionary equal to what the /sunset-spots route constructed
-        // pull out top sunset spots
 
+      function plotSunsetSpots(data) {
+        // function to plot sunsets and show pictures
+
+        // add sunset picts
         var sunsetPictures = data.pictures;
         var picturesLength = sunsetPictures.length;
-        // temp adding pics
+        // adding pics
         for (var i = 0; i < picturesLength -1; i++) {
           console.log(sunsetPictures[i])
 
           var pic = data.pictures[i]
           // $('#pictures').html('<img src="' + pic + '"/>');
-          $('<img src="' + pic + '"/>').appendTo('#pictures');
+          // $('<img src="' + pic + '"/>').appendTo('#pictures');
+          $('<div class="item"><div class="col-xs-4"><a href="#1"><img src="' + pic + '" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
         }
+
+        // Instantiate the Bootstrap carousel
+        $('.multi-item-carousel').carousel({
+        interval: false
+        });
+
+        // for every slide in carousel, copy the next slide's item in the slide.
+        // Do the same for the next, next item.
+        $('.multi-item-carousel .item').each(function(){
+          var next = $(this).next();
+          if (!next.length) {
+            next = $(this).siblings(':first');
+          }
+          next.children(':first-child').clone().appendTo($(this));
+          
+          if (next.next().length>0) {
+            next.next().children(':first-child').clone().appendTo($(this));
+          } else {
+            $(this).siblings(':first').children(':first-child').clone().appendTo($(this));
+          }
+        });
+
+
 
         var sunsetCoordinates = data.latlongs;
         var coordinatesLength = sunsetCoordinates.length;

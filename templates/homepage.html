@@ -4,31 +4,71 @@
     <title>Sunset Funset</title>
     <!-- CSS Stylesheet -->
     <link rel="stylesheet" href="../static/style.css">
-    <!-- Jquery -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <!-- JavaScript code for the Maps API is loaded via a bootstrap URL 
-    <script src="http://maps.googleapis.com/maps/api/js"></script>-->
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <!-- Latest compiled JavaScript -->
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <!--  Google Places library, key required -->
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC0YC5Rhn9N2POBLcNsZS5K8agul4zq6vw&libraries=places"></script>
     <!-- My javascript code -->
     <script src="../static/script.js"></script>
     <!-- Bootstrap link -->
-  <!--   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
    <!-- Favicon link -->
    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 
 <body>
     <form id="user-input-form">
-        Enter a location: <input type="text" name="user-location" id="user-location">
+        Find your sunset: <input type="text" name="user-location" id="user-textbox">
         <input type="submit" value="Search" id="submit-location"><br>
-
-        <input type="radio" class="radio" name="radius" value="1"> 1 mile<br>
-        <input type="radio" class="radio" name="radius" value="2"> 2 miles<br>
-        <input type="radio" class="radio" name="radius" value="5"> 5 miles<br>
-        <input type="radio" class="radio" name="radius" value="10" checked="checked"> 10 miles<br>
-        <input type="radio" class="radio" name="radius" value="20"> 20 miles<br>
+        Radius:
+        <label class="radio-inline">
+            <input type="radio" name="radius" value="1"> 1 mile<br>
+        </label>
+        <label class="radio-inline"> 
+            <input type="radio" name="radius" value="2"> 2 miles<br>
+        </label>
+        <label class="radio-inline">
+            <input type="radio"name="radius" value="5"> 5 miles<br>
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="radius" value="10" checked="checked"> 10 miles<br>
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="radius" value="20"> 20 miles<br>
+        </label>
     </form>
+
+    <!-- <div id="pictures" href=""></div> -->
+
+
+
+
+    <!-- Carousel -->
+
+    <div class="container" id="pictures">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="carousel slide multi-item-carousel" id="theCarousel">
+            <div class="carousel-inner">
+              <div class="item active">
+                <div class="col-xs-4"><a href="#1"><img src="http://placehold.it/300/e91e63/000000" class="img-responsive"></a></div>
+              </div>
+              <!-- place images from flickr here via javascript -->
+            </div>
+            <a class="left carousel-control" href="#theCarousel" data-slide="prev"><i class="glyphicon glyphicon-chevron-left"></i></a>
+            <a class="right carousel-control" href="#theCarousel" data-slide="next"><i class="glyphicon glyphicon-chevron-right"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+
+
+    <!-- Google Map -->
 
     <div id="googleMap" style="width:1000px;height:500px;"></div>
 </body>
