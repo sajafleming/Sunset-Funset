@@ -1,3 +1,4 @@
+"use strict";
 $(document).ready(function () {
 
     // do not need to initialize since I have it wrapped in function ready
@@ -16,7 +17,7 @@ $(document).ready(function () {
     // if geolocation can obtain location from browser, center map on user location
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function (position) {
-        initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+        var initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
         map.setCenter(initialLocation);
       });
     }
@@ -115,12 +116,13 @@ $(document).ready(function () {
           console.log("Lat " + results[0].geometry.location.lat());
           console.log("Lng " + results[0].geometry.location.lng());
 
-          lat = results[0].geometry.location.lat()
-          lng = results[0].geometry.location.lng()
+          var lat = results[0].geometry.location.lat()
+          var lng = results[0].geometry.location.lng()
 
           // get the lat and long that the user entered and the radius
           var params = {"lat": lat, "lng": lng, 
             "radio": $('input[name=radius]:checked').val()};
+            // ajax to get sunset latlongs and pictures
           $.get("/sunset-spots", params, plotSunsetSpots);
 
           // plot the original point
@@ -139,11 +141,78 @@ $(document).ready(function () {
       function plotSunsetSpots(data) {
         // function to plot sunsets and show pictures
 
-        // add sunset picts
+        // add pins
+        var sunsetCoordinates = data.latlongs;
+        var coordinatesLength = sunsetCoordinates.length;
+        
+        for (var i = 0; i < coordinatesLength - 1; i++) {
+          console.log(sunsetCoordinates[i][0], sunsetCoordinates[i][1]);
+
+          var myLatLng = {lat: sunsetCoordinates[i][0], lng: sunsetCoordinates[i][1]};
+
+          addMarker(myLatLng, data);
+        }
+      }
+
+
+
+        // // add one sunset pic from each spot
+        // var sunsetPictures = data.pictures;
+        // var picturesLength = sunsetPictures.length;
+        // // adding pics to html
+        // for (var i = 0; i < picturesLength -1; i++) {
+        //   console.log(sunsetPictures[i])
+
+        //   var pic = data.pictures[i]
+        //   // $('#pictures').html('<img src="' + pic + '"/>');
+        //   // $('<img src="' + pic + '"/>').appendTo('#pictures');
+        //   $('<div class="item"><div class="col-xs-4"><a href="#"><img src="' + pic + '"" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
+        //   // $('<div class="item"><div class="col-xs-4"><a href="#1"><img src="' + pic + '" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
+        // }
+
+
+      function addMarker(myLatLng, data) {
+
+        // console.log(myLatLng);
+        // console.log(map);
+
+      // TODO: fix location of this custom pin
+      // var icon = {
+      // url: "http://oi63.tinypic.com/2b8sv6.jpg", // url
+      // scaledSize: new google.maps.Size(100, 100), // scaled size
+      // origin: new google.maps.Point(50, 50), // origin
+      // anchor: new google.maps.Point(50, 50) // anchor
+      // };
+        
+        var marker = new google.maps.Marker({
+                position: myLatLng,
+                map: map,
+                // icon: icon
+        });
+
+        // markers.push(marker);
+
+
+        marker.addListener('click', function () {
+          // show pics for that pins latlong
+          console.log("i made it here")
+          console.log(myLatLng)
+         });
+      }
+
+
+      function showPictures(latlong, data) {
+
+
+        console.log("THIS IS WHAT I LOOK LIKE")
+        console.log(data)
+
+        // add pictures for pin selected
         var sunsetPictures = data.pictures;
+        console.log(sunsetPictures)
         var picturesLength = sunsetPictures.length;
-        // adding pics
-        for (var i = 0; i < picturesLength -1; i++) {
+
+         for (var i = 0; i < picturesLength -1; i++) {
           console.log(sunsetPictures[i])
 
           var pic = data.pictures[i]
@@ -193,41 +262,7 @@ $(document).ready(function () {
             $(this).siblings(':first').children(':first-child').clone().appendTo($(this));
           }
         });
-
-
-
-        var sunsetCoordinates = data.latlongs;
-        var coordinatesLength = sunsetCoordinates.length;
-        
-        for (var i = 0; i < coordinatesLength - 1; i++) {
-          console.log(sunsetCoordinates[i][0], sunsetCoordinates[i][1]);
-
-          var myLatLng = {lat: sunsetCoordinates[i][0], lng: sunsetCoordinates[i][1]};
-
-          addMarker(myLatLng);
-        }
       }
 
-
-      function addMarker(myLatLng) {
-
-        console.log(myLatLng);
-        console.log(map);
-
-      // TODO: fix location of this custom pin
-      // var icon = {
-      // url: "http://oi63.tinypic.com/2b8sv6.jpg", // url
-      // scaledSize: new google.maps.Size(100, 100), // scaled size
-      // origin: new google.maps.Point(50, 50), // origin
-      // anchor: new google.maps.Point(50, 50) // anchor
-      // };
-        
-        var marker = new google.maps.Marker({
-                position: myLatLng,
-                map: map,
-                // icon: icon
-        });
-        markers.push(marker);
-      }
 
 });
