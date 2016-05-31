@@ -110,6 +110,11 @@ $(document).ready(function () {
       geocoder.geocode({'address': address}, function(results, status) {
         console.log(results)
         if (status === google.maps.GeocoderStatus.OK) {
+          // Clear out old markers
+          while (markers.length > 0) {
+            markers.pop().setMap(null);
+          }
+
           resultsMap.setCenter(results[0].geometry.location);
 
           // get the latlong from the user's entered location
@@ -130,6 +135,7 @@ $(document).ready(function () {
             map: resultsMap,
             position: results[0].geometry.location
           });
+          markers.push(marker)
 
         } else {
           alert('Geocode was not successful for the following reason: ' + status);
@@ -142,15 +148,15 @@ $(document).ready(function () {
         // function to plot sunsets and show pictures
 
         // add pins
-        var sunsetCoordinates = data.latlongs;
+        var sunsetCoordinates = data.sunset_spots;
         var coordinatesLength = sunsetCoordinates.length;
         
-        for (var i = 0; i < coordinatesLength - 1; i++) {
-          console.log(sunsetCoordinates[i][0], sunsetCoordinates[i][1]);
+        for (var i = 0; i < coordinatesLength; i++) {
+          console.log(sunsetCoordinates[i].lat, sunsetCoordinates[i].lng);
 
-          var myLatLng = {lat: sunsetCoordinates[i][0], lng: sunsetCoordinates[i][1]};
+          var myLatLng = {lat: sunsetCoordinates[i].lat, lng: sunsetCoordinates[i].lng};
 
-          addMarker(myLatLng, data);
+          markers.push(addMarker(myLatLng, sunsetCoordinates[i].urls));
         }
       }
 
@@ -171,7 +177,7 @@ $(document).ready(function () {
         // }
 
 
-      function addMarker(myLatLng, data) {
+      function addMarker(myLatLng, urls) {
 
         // console.log(myLatLng);
         // console.log(map);
@@ -193,33 +199,37 @@ $(document).ready(function () {
         // markers.push(marker);
 
 
-        marker.addListener('click', function () {
+        marker.addListener('click', function(evt) { 
+          showPictures(myLatLng, urls) 
+        });
           // show pics for that pins latlong
-          console.log("i made it here")
-          console.log(myLatLng)
-         });
+          // console.log("i made it here")
+          // console.log(myLatLng)
+         // });
+        return marker;
       }
 
 
-      function showPictures(latlong, data) {
-
-
-        console.log("THIS IS WHAT I LOOK LIKE")
-        console.log(data)
+      function showPictures(latlong, urls) {
+        $('.carousel-inner').empty();
 
         // add pictures for pin selected
-        var sunsetPictures = data.pictures;
-        console.log(sunsetPictures)
-        var picturesLength = sunsetPictures.length;
+        var picturesLength = urls.length;
 
-         for (var i = 0; i < picturesLength -1; i++) {
-          console.log(sunsetPictures[i])
+        for (var i = 0; i < picturesLength; i++) {
+          console.log(urls[i])
 
-          var pic = data.pictures[i]
+          var pic = urls[i]
           // $('#pictures').html('<img src="' + pic + '"/>');
           // $('<img src="' + pic + '"/>').appendTo('#pictures');
-          $('<div class="item"><div class="col-xs-4"><a href="#"><img src="' + pic + '"" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
-          // $('<div class="item"><div class="col-xs-4"><a href="#1"><img src="' + pic + '" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
+          var html = '<div class="item';
+          if (i === 0) {
+            html += ' active';
+          }
+          html += '"><div class="col-xs-4"><a href="#"><img src="';
+          html += pic + '" class="my-img"></a></div></div>';
+          $('.carousel-inner').append(html);
+          //$('<div class="item"><div class="col-xs-4"><a href="#1"><img src="' + pic + '" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
         }
 
         // // Instantiate the Bootstrap carousel
@@ -244,11 +254,11 @@ $(document).ready(function () {
         // });
 
 
-        $('#myCarousel').carousel({
-          interval: 10000
+        $('.multi-item-carousel').carousel({
+          interval: false
         })
 
-        $('.carousel .item').each(function(){
+        $('.multi-item-carousel .item').each(function(){
           var next = $(this).next();
           if (!next.length) {
             next = $(this).siblings(':first');

@@ -63,30 +63,27 @@ def find_points():
 
         # call into utilities functions to get list of lat and longs for best sunset spots
 
-        n_sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound, radius)
+        sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound, radius)
         
         # return JSON containing a list of lat/lng of best sunset spots
 
         # query all latlongs in flickr for pictures
-        final_urls = {}
+        final_data = []
+        latlong_pics_dict = {}
 
-        for latlong in n_sunset_spots:
+        for latlong in sunset_spots:
 
             data = request_flickr_data(latlong[0], latlong[1], .25)
             image_urls = data_to_urls(data)
             # for now just add the first url to the final urls list
             # maybe later I will have a better way of picking popular pictures
-            if len(image_urls) > 0:
-                # keys must be strings?
-                # create a dictionary where the key is latlong nd the values are the 
-                # correspodnign urls
-                final_urls[str(latlong)] = image_urls
 
-        print "HEY YALL I'M A DICTIONARY"
-        print final_urls
+            # construct data dictionary
+            final_data.append({"lat": latlong[0], "lng": latlong[1], "urls": image_urls})
+
 
         # final urls is now a dict containing latlongs and corresponding urls
-        results = jsonify({"latlongs": n_sunset_spots, "pictures": final_urls})
+        results = jsonify(sunset_spots=final_data)
         
         return results
         # return jsonify(hella)
