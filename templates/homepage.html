@@ -1,91 +1,47 @@
-<!doctype html>
-<html>
-<head>
-    <title>Sunset Funset</title>
-    <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="../static/style.css">
-    <!-- jQuery library -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
-    <!-- Latest compiled JavaScript -->
-    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-    <!-- css less stylesheet -->
-    <!-- <link rel="stylesheet/less" type="text/css" href="../static/main.less" /> -->
-    <!-- less js -->
-    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/2.5.1/less.min.js"></script> -->
-    <!--  Google Places library, key required -->
-    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC0YC5Rhn9N2POBLcNsZS5K8agul4zq6vw&libraries=places"></script>
-    <!-- My javascript code -->
-    <script src="../static/script.js"></script>
-    <!-- Bootstrap link -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-   <!-- Favicon link -->
-   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-</head>
+{% extends "base.html" %}
+{% block content %} 
 
-<body>
-    <form id="user-input-form">
-        Find your sunset: <input type="text" name="user-location" id="user-textbox">
-        <input type="submit" value="Search" id="submit-location"><br>
-        Radius:
-        <label class="radio-inline">
-            <input type="radio" name="radius" value="1"> 1 mile<br>
-        </label>
-        <label class="radio-inline"> 
-            <input type="radio" name="radius" value="2"> 2 miles<br>
-        </label>
-        <label class="radio-inline">
-            <input type="radio"name="radius" value="5"> 5 miles<br>
-        </label>
-        <label class="radio-inline">
-            <input type="radio" name="radius" value="10" checked="checked"> 10 miles<br>
-        </label>
-        <label class="radio-inline">
-            <input type="radio" name="radius" value="20"> 20 miles<br>
-        </label>
-    </form>
+<div class="container">
+  <form id="user-input-form">
+      Find your sunset: <input type="text" name="user-location" id="user-textbox">
+      <input type="submit" value="Search" class="btn btn-info-outline" id="submit-location"><br>
+      Radius:
+      <label class="radio-inline">
+          <input type="radio" name="radius" value="1"> 1 mile<br>
+      </label>
+      <label class="radio-inline"> 
+          <input type="radio" name="radius" value="2"> 2 miles<br>
+      </label>
+      <label class="radio-inline">
+          <input type="radio"name="radius" value="5"> 5 miles<br>
+      </label>
+      <label class="radio-inline">
+          <input type="radio" name="radius" value="10" checked="checked"> 10 miles<br>
+      </label>
+      <label class="radio-inline">
+          <input type="radio" name="radius" value="20"> 20 miles<br>
+      </label>
+  </form>
+</div>
 
-    <!-- Google Map -->
+<!-- Google Map -->
 
-    <div id="googleMap" style="width:1000px;height:500px;"></div>
+<div class="container" id="googleMap" style="width:1000px;height:300px;"></div>
 
-    <!-- Carousel -->
+<!-- Carousel -->
 
-    <div class="container" id="pictures">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="carousel slide multi-item-carousel" id="theCarousel">
-            <div class="carousel-inner">
-              <!-- place images from flickr here via javascript -->
-            </div>
-            <a class="left carousel-control" href="#theCarousel" data-slide="prev"><i class="glyphicon glyphicon-chevron-left"></i></a>
-            <a class="right carousel-control" href="#theCarousel" data-slide="next"><i class="glyphicon glyphicon-chevron-right"></i></a>
-          </div>
+<div class="container" id="pictures">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="carousel slide multi-item-carousel" id="theCarousel">
+        <div class="carousel-inner">
+          <!-- place images from flickr here via javascript -->
         </div>
+        <a class="left carousel-control" href="#theCarousel" data-slide="prev"><i class="glyphicon glyphicon-chevron-left"></i></a>
+        <a class="right carousel-control" href="#theCarousel" data-slide="next"><i class="glyphicon glyphicon-chevron-right"></i></a>
       </div>
     </div>
+  </div>
+</div>
 
-
-  <!-- New try -->
-
- <!--  <div id="myCarousel" class="carousel slide">
-    <div class="carousel-inner">
-      <div class="item active">
-        <div class="col-xs-4"><a href="#"><img src="http://placehold.it/500/bbbbbb/fff&amp;text=1" class="img-responsive"></a></div>
-      </div>
-    </div> -->
-
-
-    <!-- Controls -->
-<!--     <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
-      <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-      <span class="sr-only">Previous</span>
-    </a>
-    <a class="right carousel-control" href="#myCarousel" role="button"    data-slide="next">
-      <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-      <span class="sr-only">Next</span>
-    </a>
-  </div> -->
-
-
-</body>
-</html>
+{% endblock %}

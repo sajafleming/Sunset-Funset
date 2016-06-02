@@ -1,6 +1,12 @@
 body {
-    background-image: url("fav.jpg");
-    background-size: 100% auto;
+    /*background-image: url("fav.jpg");
+    background-size: 100% auto;*/
+    background-color: #f5f5f5;
+}
+
+.container {
+  margin: auto;
+  padding: 10px;
 }
 
 #user-textbox {
@@ -12,21 +18,14 @@ body {
 
 form {
     font-size: 20px;
-    color: white;
+    color: black;
     text-align: center;
     font-family: Verdana;
 }
 
-#pictures {
-    display: block;
-}
-
 #submit-location {
-    background: #6d8383;
-}
-
-#googleMap {
-    margin: auto;
+    background: #a3d2fe;
+    color: white;
 }
 
 #user-textbox {
@@ -35,21 +34,14 @@ form {
     font-size:14pt;
 }
 
-/*.item {
-  height: 500px;
-  width: 500px;
-}*/
-
-.carousel-inner .active.left  { left: -33%;             }
-.carousel-inner .active.right { left: 33%;              }
-.carousel-inner .next         { left: 33%               }
-.carousel-inner .prev         { left: -33%              }
-.carousel-control.left        { background-image: none; }
-.carousel-control.right       { background-image: none; }
-.carousel-inner .item         { background: white;      }
+.my-img {
+  height: 300px;
+  width: 300px;
+}
 
 
-/*.multi-item-carousel .carousel-inner > .item {
+/* Carousel styling */
+.multi-item-carousel .carousel-inner > .item {
   -webkit-transition: 500ms ease-in-out;
   transition: 500ms ease-in-out;
 }
@@ -74,4 +66,4 @@ form {
     -webkit-transform: none!important;
             transform: none!important;
   }
-}*/
+}
