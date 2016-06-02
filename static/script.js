@@ -1,6 +1,8 @@
 "use strict";
 $(document).ready(function () {
 
+  $('.multi-item-carousel').hide()
+
   // do not need to initialize since I have it wrapped in function ready
   // function initialize() {
 
@@ -117,9 +119,11 @@ $(document).ready(function () {
         $.get("/sunset-spots", params, plotSunsetSpots);
 
         // plot the original point
-        var marker = new google.maps.Marker({
+        var enteredLocation = new google.maps.Marker({
           map: resultsMap,
-          position: results[0].geometry.location
+          icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          position: results[0].geometry.location,
+          animation: google.maps.Animation.DROP
         });
 
         markers.push(marker)
@@ -169,18 +173,29 @@ $(document).ready(function () {
     });
 
     marker.addListener('click', function(evt) { 
-      showPictures(myLatLng, urls) 
+      showPictures(myLatLng, urls);
+      // loop through and set each icon back to default
+      for (var i = 0; i < markers.length; i++) {
+        markers[i].setIcon("http://mt.googleapis.com/vt/icon/name=icons/spotlight/spotlight-poi.png");
+        }
+      // change the selected marker to the sunpin 
+      this.setIcon("http://i66.tinypic.com/17wjro.png");
+      // show carousel arrows
+      $('.multi-item-carousel').show()
     });
 
     return marker;
   }
-
 
   function showPictures(latlong, urls) {
     $('.carousel-inner').empty();
 
     // add pictures for pin selected
     var picturesLength = urls.length;
+
+    if (picturesLength === 0) {
+      alert("No pictures available for this area")
+    }
 
     for (var i = 0; i < picturesLength; i++) {
       console.log(urls[i])
