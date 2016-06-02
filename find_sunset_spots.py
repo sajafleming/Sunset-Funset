@@ -18,7 +18,7 @@ ROWS_FOR_DROPOFF = 5
 COLUMNS_FOR_DROPOFF = 5
 BOUNDING_BOX_WIDTH = 100
 # Each index represents approximately .0186411357696567 miles
-MILES_PER_INDES = 0.0186411357696567
+MILES_PER_INDEX = 0.0186411357696567
 
 class SunsetSpotFinder(object):
     """Find the best sunset viewing spots"""
@@ -36,19 +36,23 @@ class SunsetSpotFinder(object):
         self._user_latlong_coordinates = None
         self._radius_in_indices = None
         self._elevation_of_center = None
+        # attribute for rootfilename
 
-    def pick_n_best_points(self):
-        """Pick n of the best sunset viewing spot candidates. 
+    def pick_best_points(self):
+        """Pick the best sunset viewing spot candidates. 
 
         The function first pulls surrounding latlong data into memory. Next, the 
         data is filtered to local maximums without obstructions to the west. 
         Next, those remaining points are given a score based on their elevation 
         and how much they resemble a cliff or dropoff. The candidate points are 
-        then ranked and sorted by ranking and the first n are converted to 
+        then ranked and sorted by ranking and tnumdfdhe first n are converted to 
         latlong.
 
         Returns n latlongs, representing the best n sunset viewing spots. 
         """
+
+        # Convert the user's radius to number of indices for cropping
+        self._radius_in_indices = SunsetSpotFinder._convert_radius_to_indices(self._search_radius)
 
         # Create array with elevation data surrounding the user's inputted 
         # latlong
@@ -57,9 +61,6 @@ class SunsetSpotFinder(object):
         # Crop the elevation array according to the user's radius
         (self._cropped_elevation_array, self._cropped_array_top_left_indices, 
             self._user_latlong_coordinates) = self._crop_elevation_array()
-
-        # Convert the user's radius to number of indices for cropping
-        self._radius_in_indices = SunsetSpotFinder._convert_radius_to_indices(self._search_radius)
 
         # Begin filter process:
         # 1. filter out any point that is not a local maxima over a certain area
@@ -113,33 +114,26 @@ class SunsetSpotFinder(object):
 
         return final_latlongs
 
-    @staticmethod
-    def _convert_radius_to_indices(user_radius_miles):
-        """Take the mileage that the user inputted and conver to how many
-        indices if would represent. 
-
-        Each index represents approximately .0186411357696567 miles
-        """
-        # TODO: move to constant
-        return int(float(user_radius_miles) / MILES_PER_INDES)
-
     def _create_elevation_array(self):
-        """Create a master array containing all arrays surrounding the given latlong.
+        """Create a master array containing all arrays surrounding the given 
+        latlong.
 
-        The array will be constructed from the dictionary of filenames with the keys
-        in the following structure:
+        The array will be constructed from the dictionary of filenames with the 
+        keys in the following structure:
 
         [NW][N][NE]
          [W][C][E]
         [SW][S][SE]
 
         The .img files have an overlap of approx. 11.999999880419653 indices. To 
-        reconcile this, slice the OVERLAPPING_INDICES off the south and east bounds.
+        reconcile this, slice the OVERLAPPING_INDICES off the south and east 
+        bounds.
 
         This will return an array with dimensions of 10,800 * 10,800
         """
 
-        # Create the filename dict where the keys correspond to the location in elevation array
+        # Create the filename dict where the keys correspond to the location in 
+        # elevation array
         filename_dict = self._generate_surrounding_filenames()
 
         # Instantiate a new dictionary with the arrays as values
@@ -147,6 +141,7 @@ class SunsetSpotFinder(object):
 
         for file_key in filename_dict:
 
+            # default img file root to attribute
             filepath = DEFAULT_IMG_FILE_ROOT + filename_dict[file_key]
 
             # Check to make sure the file exists
@@ -168,7 +163,7 @@ class SunsetSpotFinder(object):
                 # dimensions with all zeros
                 data_dict[file_key] = np.zeros_like(
                     look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES] 
-                    # TODO: hardcode dimensions and use np.zeros() here
+                    # TODO: actually fix this hardcode dimensions and use np.zeros() here
 
         # Use scipy to vertically concatenate 3 rows that have been horizontally 
         # concatenated
@@ -178,35 +173,14 @@ class SunsetSpotFinder(object):
                scipy.hstack((data_dict["SW"], data_dict["S"], data_dict["SE"]))
                )))
 
-    @staticmethod
-    def _get_filename_n_w(latlong):
-        """Find the filename of the file that includes data for the given latlong. 
-        Return latlong and the n and w integer values in the filename.
-
-        The topographic data is 1-arc-second of resolution and each file has a 
-        rounded integer name of the corresponding NW coordinate. Note the exact NESW
-        bounds of every tile are stored in a database.
-
-        If the given latlong is (37.7749, 122.4194)) the function will 
-        return ("n38w123.img", 38, 123)
-        """
-
-        # The ceiling of the lat coordinate will give the n int value in the filename
-        n = int(ceil(latlong[0]))
-        # The actually long is negative but the files are named as postitive integers
-        # so take the abs value of the coordinate before the ceiling 
-        w = int(ceil(abs(latlong[1]))) # will always return a postive integer
-
-        # print n, w
-        return n, w 
-
     def _find_local_maxima(self):
         """Find local maxima of 2D array and return positions in array.
 
         The format of the returned coordinates is (array([row1, row2]), (array[column1, column2]). 
         The algorithm used to find local maxima is argrelmax which belongs to the 
-        scipy.signal library. The argrelmax returns values where ``comparator(data[n], data[n+1:n+order+1])``
-        is True. For more info see http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.signal.argrelmax.html#scipy.signal.argrelmax
+        scipy.signal library. The argrelmax returns values where 
+        ``comparator(data[n], data[n+1:n+order+1])`` is True. For more info see 
+        http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.signal.argrelmax.html#scipy.signal.argrelmax
 
         TEST
         -----
@@ -216,13 +190,13 @@ class SunsetSpotFinder(object):
         >>> argrelmax(y, axis=1)
         (array([0]), array([1]))
 
-        For every point returned by argrelmax, check if local maxima condition still
-        true when looking at an area of about FIXME BOUNDING_BOX_WIDTH
+        For every point returned by argrelmax, check if local maxima condition 
+        still true when looking at an area of about FIXME BOUNDING_BOX_WIDTH
 
         The function returns all local maximums in a list in the form:
         [((row, column), relative_elevation), ... ]
 
-        Elevation realative to starting point.
+        Elevation relative to starting point.
         """
 
 
@@ -260,7 +234,7 @@ class SunsetSpotFinder(object):
         """
         # check this to make sure it's doing what I want
         
-        # only testing current row now, might want to add above and below
+        # tesing rows...see global variable
         row_index_constant = candidate_point[0][0]
         candidate_point_elevation = candidate_point[1]
 
@@ -305,8 +279,8 @@ class SunsetSpotFinder(object):
         column_upper_bound = candidate_point[0][1]
 
 
-        print "CANDIDATE POINT"
-        print candidate_point
+        # print "CANDIDATE POINT"
+        # print candidate_point
         candidate_elevation = candidate_point[1] 
 
         total_points = 0
@@ -333,41 +307,6 @@ class SunsetSpotFinder(object):
 
 
         return cliff_score
-
-    @staticmethod
-    def _rank_candidate_points(candidate_points):
-        """Using a candidate point's scores, return a ranking for how good of a
-        sunset viewing spot the point is. Returns the top 100 ranked sunsets.
-
-        Returns a list of tuples of coordinates with the indices and the calculated
-        ranking. The list is sorted by ranking.
-        """
-
-        candidates_with_ranking = []
-        candidates_score = 0
-
-        for candidate_point in candidate_points:
-            # print "HERE I AM"
-            # print candidate_point
-
-            elevation_score = candidate_point[1][0]
-            cliffiness_score = candidate_point[1][1]
-            print "ELEVATION SCORE"
-            print elevation_score
-            print "CLIFF SCORE"
-            print cliffiness_score
-
-            # Multiply the scores by weight to create a ranking number
-            candidates_score = (elevation_score * .05) + (cliffiness_score * 0)
-            # candidates_score = elevation_score * cliffiness_score
-
-            # Add point and rank to a list
-            candidates_with_ranking.append((candidate_point[0], candidates_score))
-
-        # Sort list in descending order by ranking
-        candidates_with_ranking.sort(key=itemgetter(1), reverse=True)
-
-        return candidates_with_ranking[:100]
 
     def _convert_to_latlong(self, coordinate):
         """Given a tuple of indicess for a point in the form (row, column), calculate
@@ -415,22 +354,6 @@ class SunsetSpotFinder(object):
 
         return filenames
 
-    @staticmethod
-    def _read_img_file(filepath):
-        """Read .img file as 2D numpy array given a filepath. 
-
-        The .img files are raster data. The osgeo library provides a way to 
-        open these files and read them as a numpy 2D array.
-
-        Each array of 1 arc second should have dimensions 3612 x 3612. 
-        """
-
-        geo = gdal.Open(filepath)
-       
-        arr = geo.ReadAsArray()
-
-        return arr
-
     def _crop_elevation_array(self):
         """Crop the elevation_data_array to approximately a 20 mile radius (1073 entries:
         each index represents approximately .0186411357696567 miles)
@@ -443,17 +366,17 @@ class SunsetSpotFinder(object):
         along with the NW (top left) coordinate of the new array. The radius array 
         dimensions will be 2146 x 2146.
         """
-
+      
         # Coordinates for user entered point in terms of master array
         y_index, x_index = self._find_coordinates()
 
         # n = len(elevation_array)
 
         # Creating the box around the radius by setting a beginning and ending point
-        y_begin = max(y_index - self._search_radius, 0)
-        y_end = y_index + self._search_radius + 1
-        x_begin = max(x_index - self._search_radius, 0)
-        x_end = x_index + self._search_radius + 1
+        y_begin = max(y_index - self._radius_in_indices, 0)
+        y_end = y_index + self._radius_in_indices + 1
+        x_begin = max(x_index - self._radius_in_indices, 0)
+        x_end = x_index + self._radius_in_indices + 1
        
         cropped_elevation_array = self._elevation_array[y_begin:y_end, 
                                                         x_begin:x_end]
@@ -523,6 +446,89 @@ class SunsetSpotFinder(object):
 
         return (y_index, x_index)
 
+    @staticmethod
+    def _convert_radius_to_indices(user_radius_miles):
+        """Take the mileage that the user inputted and conver to how many
+        indices if would represent. 
+
+        Each index represents approximately .0186411357696567 miles
+        """
+        # TODO: move to constant
+        return int(float(user_radius_miles) / MILES_PER_INDEX)
+
+
+    @staticmethod
+    def _get_filename_n_w(latlong):
+        """Find the filename of the file that includes data for the given latlong. 
+        Return latlong and the n and w integer values in the filename.
+
+        The topographic data is 1-arc-second of resolution and each file has a 
+        rounded integer name of the corresponding NW coordinate. Note the exact NESW
+        bounds of every tile are stored in a database.
+
+        If the given latlong is (37.7749, 122.4194)) the function will 
+        return ("n38w123.img", 38, 123)
+        """
+
+        # The ceiling of the lat coordinate will give the n int value in the filename
+        n = int(ceil(latlong[0]))
+        # The actually long is negative but the files are named as postitive integers
+        # so take the abs value of the coordinate before the ceiling 
+        w = int(ceil(abs(latlong[1]))) # will always return a postive integer
+
+        # print n, w
+        return n, w 
+
+    @staticmethod
+    def _rank_candidate_points(candidate_points):
+        """Using a candidate point's scores, return a ranking for how good of a
+        sunset viewing spot the point is. Returns the top 100 ranked sunsets.
+
+        Returns a list of tuples of coordinates with the indices and the calculated
+        ranking. The list is sorted by ranking.
+        """
+
+        candidates_with_ranking = []
+        candidates_score = 0
+
+        for candidate_point in candidate_points:
+            # print "HERE I AM"
+            # print candidate_point
+
+            elevation_score = candidate_point[1][0]
+            cliffiness_score = candidate_point[1][1]
+            # print "ELEVATION SCORE"
+            # print elevation_score
+            # print "CLIFF SCORE"
+            # print cliffiness_score
+
+            # Multiply the scores by weight to create a ranking number
+            # candidates_score = (elevation_score * .05) + (cliffiness_score * 0)
+            candidates_score = elevation_score * cliffiness_score
+
+            # Add point and rank to a list
+            candidates_with_ranking.append((candidate_point[0], candidates_score))
+
+        # Sort list in descending order by ranking
+        candidates_with_ranking.sort(key=itemgetter(1), reverse=True)
+
+        return candidates_with_ranking[:100]
+
+    @staticmethod
+    def _read_img_file(filepath):
+        """Read .img file as 2D numpy array given a filepath. 
+
+        The .img files are raster data. The osgeo library provides a way to 
+        open these files and read them as a numpy 2D array.
+
+        Each array of 1 arc second should have dimensions 3612 x 3612. 
+        """
+
+        geo = gdal.Open(filepath)
+       
+        arr = geo.ReadAsArray()
+
+        return arr
 
     @staticmethod
     def _create_filename(n, w):
@@ -532,6 +538,6 @@ class SunsetSpotFinder(object):
 
 
 test = SunsetSpotFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 10)
-print test.pick_n_best_points()
+print test.pick_best_points()
 
 
