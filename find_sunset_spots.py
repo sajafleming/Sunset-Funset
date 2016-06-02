@@ -7,6 +7,7 @@ import os
 from scipy.ndimage.filters import generic_filter as gf
 from flask_sqlalchemy import SQLAlchemy
 from operator import itemgetter
+import time
 
 DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
 DEGREES_PER_INDEX = 0.0002777777777685509
@@ -16,7 +17,7 @@ CHECK_WEST = 500
 ROWS_CHECK = 5
 ROWS_FOR_DROPOFF = 5
 COLUMNS_FOR_DROPOFF = 5
-BOUNDING_BOX_WIDTH = 100
+BOUNDING_BOX_WIDTH = 50
 # Each index represents approximately .0186411357696567 miles
 MILES_PER_INDEX = 0.0186411357696567
 
@@ -64,16 +65,24 @@ class SunsetSpotFinder(object):
 
         # Begin filter process:
         # 1. filter out any point that is not a local maxima over a certain area
+        t0 = time.time()
         candidates_with_elevations = self._find_local_maxima()
+        t1 = time.time()
 
+        print "TIME _find_local_maxima: {}".format(t1 - t0)
+    
         # Compute all scores (elevation is already a score)
         # All scores are stored in a list
 
         # 2. filter remaining candidates  using list comprehension by checking 
         # obstructions to the west
+        t0 = time.time()
         candidates_with_elevations = [candidate for candidate
                                       in candidates_with_elevations 
                                       if self._is_unobstructed_west(candidate)]
+        t1 = time.time()
+
+        print "TIME _is_unobstructed_west: {}".format(t1 - t0)
 
         print "Num candidates after obstruction filtering = {}".format(
             len(candidates_with_elevations))
@@ -85,36 +94,49 @@ class SunsetSpotFinder(object):
                                         self._user_latlong_coordinates)
 
         # Add cliff score and elevation score to candidate_point tuple
+        t0 = time.time()
         for candidate_point in candidates_with_elevations:
 
             candidate_elevation = candidate_point[1]
             # the elevation score is the elevation at the candidate point minus 
             # the elevation of the starting point
             elevation_score = candidate_elevation - self._elevation_of_center
-
+            
             cliff_score = self._get_cliff_score(candidate_point)
         
             candidates_with_all_scores.append((candidate_point[0], 
                 [elevation_score, cliff_score]))
 
+        t1 = time.time()
+        print "TIME _get_cliff_score and elevation_score: {}".format(t1 - t0)
+
         # candidates_with_all_scores are now in the format:
         # [(lat, long), elevation_score, cliff_score]
         
         # Rank points - rank function only returns top 100
+        t0 = time.time()
         ranked_points = self._rank_candidate_points(candidates_with_all_scores)
+        t1 = time.time()
+
+        print "TIME _rank_candidate_points: {}".format(t1 - t0)
+
         print "First 100 candidate points sorted by rank"
         print ranked_points
 
         # Finally, convert these last points to latlongs
         final_latlongs = []
 
+        t0 = time.time()
         # Convert n ranked points to latlongs
         for final_point in ranked_points[:self._number_of_points_returned]:
     
             final_latlongs.append(self._convert_to_latlong(final_point[0]))
 
+        t1 = time.time()
+        print "TIME _convert_to_latlong: {}".format(t1 - t0)
+
         print "N POINTS"
-        print final_latlongs
+        # print final_latlongs
 
         return final_latlongs
 
@@ -203,13 +225,17 @@ class SunsetSpotFinder(object):
         Elevation relative to starting point.
         """
 
-
+        t0 = time.time()
         local_maxima = scipy.signal.argrelmax(self._cropped_elevation_array)
+        t1 = time.time()
+
+        print "TIME BREAKDOWN _local_maxima: argrelmax {}".format(t1 - t0)
 
         print "Num local_maxima from scipy = {}".format(len(local_maxima[0]))
 
         candidates_with_elevations = []
 
+        t0 = time.time()
         # Loop over every point returned in argrelmax and do further analysis:
         for i in xrange(len(local_maxima[0])):
 
@@ -228,7 +254,10 @@ class SunsetSpotFinder(object):
                 candidates_with_elevations.append(((local_maxima[0][i], 
                                                     local_maxima[1][i]), 
                                                     elevation))
-            
+
+        t1 = time.time()
+        print "TIME BREAKDOWN _local_maxima: check bounding_box {}".format(t1 - t0)
+
         return candidates_with_elevations
 
     def _is_unobstructed_west(self, candidate_point):
@@ -541,6 +570,6 @@ class SunsetSpotFinder(object):
         return "n%sw%s.img" % (n, w)
 
 
-# test = SunsetSpotFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 10)
-# print test.pick_best_points()
+test = SunsetSpotFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 20)
+print test.pick_best_points()
 
