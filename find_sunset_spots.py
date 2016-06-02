@@ -80,22 +80,27 @@ class SunsetSpotFinder(object):
         # Create new list to store all the scores
         candidates_with_all_scores = []
 
-        # TODO: PUT ELEVATION SCORE HERE: ELEVATION SCORE IS RELATIVE ELEVATION
-
         # Find the elevation of the point that the user entered
         self._elevation_of_center = self._elevation_by_indices(
                                         self._user_latlong_coordinates)
 
-        # Add cliff score to candidate_point tuple
+        # Add cliff score and elevation score to candidate_point tuple
         for candidate_point in candidates_with_elevations:
+
+            candidate_elevation = candidate_point[1]
+            # the elevation score is the elevation at the candidate point minus 
+            # the elevation of the starting point
+            elevation_score = candidate_elevation - self._elevation_of_center
+
             cliff_score = self._get_cliff_score(candidate_point)
-            # TODO: compute relative elevation, set as first score
-            candidates_with_all_scores.append((candidate_point[0],
-                [candidate_point[1], cliff_score]))
+        
+            candidates_with_all_scores.append((candidate_point[0], 
+                [elevation_score, cliff_score]))
+
+        # candidates_with_all_scores are now in the format:
+        # [(lat, long), elevation_score, cliff_score]
         
         # Rank points - rank function only returns top 100
-        # TODO: make rank_candidate_points a static method that takes
-        # candidate points as an argument
         ranked_points = self._rank_candidate_points(candidates_with_all_scores)
         print "First 100 candidate points sorted by rank"
         print ranked_points
@@ -105,8 +110,7 @@ class SunsetSpotFinder(object):
 
         # Convert n ranked points to latlongs
         for final_point in ranked_points[:self._number_of_points_returned]:
-            # TODO: make convert_to_latlong an instance method whose only
-            # argument is final_point[0]
+    
             final_latlongs.append(self._convert_to_latlong(final_point[0]))
 
         print "N POINTS"
@@ -503,8 +507,8 @@ class SunsetSpotFinder(object):
             # print cliffiness_score
 
             # Multiply the scores by weight to create a ranking number
-            # candidates_score = (elevation_score * .05) + (cliffiness_score * 0)
-            candidates_score = elevation_score * cliffiness_score
+            candidates_score = (elevation_score * .05) + (cliffiness_score * .1)
+            # candidates_score = elevation_score * cliffiness_score
 
             # Add point and rank to a list
             candidates_with_ranking.append((candidate_point[0], candidates_score))
