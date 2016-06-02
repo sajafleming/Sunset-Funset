@@ -537,7 +537,6 @@ class SunsetSpotFinder(object):
         return "n%sw%s.img" % (n, w)
 
 
-test = SunsetSpotFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 10)
-print test.pick_best_points()
-
+# test = SunsetSpotFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 10)
+# print test.pick_best_points()
 

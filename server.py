@@ -2,8 +2,9 @@
 
 from jinja2 import StrictUndefined
 from flask import Flask, render_template, redirect, request, flash, session, jsonify
-from utilities import find_filename, create_filename, pick_n_best_points, validate_location_for_search
+from utilities import find_filename, create_filename
 # from flask_debugtoolbar import DebugToolbarExtension
+from find_sunset_spots import SunsetSpotFinder
 from flask_sqlalchemy import SQLAlchemy
 from model import connect_to_db, db, LatLong
 from get_photos import data_to_urls, request_flickr_data
@@ -19,11 +20,19 @@ app.jinja_env.undefined = StrictUndefined
 
 @app.route('/')
 def home():
-    """Homepage."""
+    """Homepage"""
 
     # skeleton this
 
     return render_template("homepage.html")
+
+
+# @app.route('/intro')
+# def intro():
+#     """Intro page"""
+
+#     return render_template("intro.html")
+
 
 @app.route('/sunset-spots', methods=["GET"])
 def find_points():
@@ -43,55 +52,59 @@ def find_points():
     print "\n"
     print latlong
 
-    # validate that the location the user wants to search is within the US
-    if validate_location_for_search(latlong):
+    # validate that there is data for the location the user wants to search 
+    # if validate_location_for_search(latlong):
 
         
-        filename_of_original_latlong, n, w = find_filename(latlong)
-        print filename_of_original_latlong
-        top_left_filename = create_filename(n + 1, w + 1) # want to add 1 to w here because filename represented as positive
-        print "#############################################"
-        print top_left_filename
-        top_left_db_filename = top_left_filename.split(".")[0]
-        print top_left_db_filename
+    filename_of_original_latlong, n, w = find_filename(latlong)
+    print filename_of_original_latlong
 
-        # TODO: add condition for if the top left tile doesn't exist
-        # query db for exact coordinates of NW corner of master array
-        exact_coordinates = LatLong.query.filter_by(filename=top_left_db_filename).first()
-        exact_N_bound = exact_coordinates.n_bound
-        exact_W_bound = exact_coordinates.w_bound
+    top_left_filename = create_filename(n + 1, w + 1) # want to add 1 to w here because filename represented as positive
+    print "#############################################"
 
-        # call into utilities functions to get list of lat and longs for best sunset spots
+    print top_left_filename
 
-        sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound, radius)
-        
-        # return JSON containing a list of lat/lng of best sunset spots
+    top_left_db_filename = top_left_filename.split(".")[0]
+    print top_left_db_filename
 
-        # query all latlongs in flickr for pictures
-        final_data = []
-        latlong_pics_dict = {}
+    # TODO: add condition for if the top left tile doesn't exist
+    # query db for exact coordinates of NW corner of master array
+    exact_coordinates = LatLong.query.filter_by(filename=top_left_db_filename).first()
+    exact_N_bound = exact_coordinates.n_bound
+    exact_W_bound = exact_coordinates.w_bound
 
-        for latlong in sunset_spots:
+    # call into utilities functions to get list of lat and longs for best sunset spots
+    # sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound, radius)
 
-            data = request_flickr_data(latlong[0], latlong[1], .25)
-            image_urls = data_to_urls(data)
-            # for now just add the first url to the final urls list
-            # maybe later I will have a better way of picking popular pictures
+    # use SunsetSpotFinder class to instantiate a new object
+    potential_sunset_spots = SunsetSpotFinder(latlong, exact_N_bound, exact_W_bound, radius)
+    sunset_spots = potential_sunset_spots.pick_best_points()
 
-            # construct data dictionary
-            final_data.append({"lat": latlong[0], "lng": latlong[1], "urls": image_urls})
+    # query all latlongs in flickr for pictures
+    final_data = []
+    latlong_pics_dict = {}
+
+    for latlong in sunset_spots:
+
+        data = request_flickr_data(latlong[0], latlong[1], .25)
+        image_urls = data_to_urls(data)
+        # for now just add the first url to the final urls list
+        # maybe later I will have a better way of picking popular pictures
+
+        # construct data dictionary
+        final_data.append({"lat": latlong[0], "lng": latlong[1], "urls": image_urls})
 
 
-        # final urls is now a dict containing latlongs and corresponding urls
-        results = jsonify(sunset_spots=final_data)
-        
-        return results
-        # return jsonify(hella)
-        # google_json = request.form.get('user-location')
-        # print google_json
+    # final urls is now a dict containing latlongs and corresponding urls
+    results = jsonify(sunset_spots=final_data)
+    
+    return results
+    # return jsonify(hella)
+    # google_json = request.form.get('user-location')
+    # print google_json
 
-    else:
-        return jsonify(error="I'm sorry, Sunset-Funset is not available in your area. Look west and hope for the best :-)")
+    # else:
+    #     return jsonify(error="I'm sorry, Sunset-Funset is not available in your area. Look west and hope for the best :-)")
 
 
 if __name__ == "__main__":
