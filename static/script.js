@@ -15,6 +15,7 @@ $(document).ready(function () {
   // new google maps object
   var map = new google.maps.Map($("#googleMap")[0], mapProp);
   var markers = [];
+  // var mainMarker = [];
 
   // if geolocation can obtain location from browser, center map on user location
   if (navigator.geolocation) {
@@ -74,6 +75,13 @@ $(document).ready(function () {
     $(this).val('');
   });
 
+  // Get the <span> element that closes the modal
+  var span = document.getElementsByClassName("close")[0];
+  // When the user clicks on <span> (x), close the modal
+  span.onclick = function() {
+    $('#error-modal').css('display', 'none');
+  }
+
     // Bias the autocomplete object to the user's geographical location,
   // as supplied by the browser's 'navigator.geolocation' object.
   function geolocate() {
@@ -100,6 +108,7 @@ $(document).ready(function () {
         // Clear out old markers
         while (markers.length > 0) {
           markers.pop().setMap(null);
+          // mainMarker.pop().setMap(null);
         }
 
         resultsMap.setCenter(results[0].geometry.location);
@@ -126,7 +135,11 @@ $(document).ready(function () {
           animation: google.maps.Animation.DROP
         });
 
-        markers.push(marker)
+        google.maps.event.addListener(enteredLocation, 'click', function() {
+          $('#myModal').modal('show');
+        });
+
+        markers.push(enteredLocation)
 
       } else {
         alert('Geocode was not successful for the following reason: ' + status);
@@ -137,17 +150,22 @@ $(document).ready(function () {
 
   function plotSunsetSpots(data) {
     // function to plot sunsets points
+    if (data.hasOwnProperty("error")) {
+      // show error message
+      $('#error-modal').css('display', 'block');
+    } else {
 
-    // add pins
-    var sunsetCoordinates = data.sunset_spots;
-    var coordinatesLength = sunsetCoordinates.length;
-    
-    for (var i = 0; i < coordinatesLength; i++) {
-      console.log(sunsetCoordinates[i].lat, sunsetCoordinates[i].lng);
+      // add pins
+      var sunsetCoordinates = data.sunset_spots;
+      var coordinatesLength = sunsetCoordinates.length;
+      
+      for (var i = 0; i < coordinatesLength; i++) {
+        console.log(sunsetCoordinates[i].lat, sunsetCoordinates[i].lng);
 
-      var myLatLng = {lat: sunsetCoordinates[i].lat, lng: sunsetCoordinates[i].lng};
+        var myLatLng = {lat: sunsetCoordinates[i].lat, lng: sunsetCoordinates[i].lng};
 
-      markers.push(addMarker(myLatLng, sunsetCoordinates[i].urls));
+        markers.push(addMarker(myLatLng, sunsetCoordinates[i].urls));
+    }
     }
   }
 
@@ -174,10 +192,10 @@ $(document).ready(function () {
 
     marker.addListener('click', function(evt) { 
       showPictures(myLatLng, urls);
-      // loop through and set each icon back to default
-      for (var i = 0; i < markers.length; i++) {
-        markers[i].setIcon("http://mt.googleapis.com/vt/icon/name=icons/spotlight/spotlight-poi.png");
-        }
+      // loop through and set each icon back to default, except for the first one (the point searched for)
+      for (var i = 1; i < markers.length; i++) {
+        markers[i].setIcon(null);
+      }
       // change the selected marker to the sunpin 
       this.setIcon("http://i66.tinypic.com/17wjro.png");
       // show carousel arrows
@@ -194,7 +212,8 @@ $(document).ready(function () {
     var picturesLength = urls.length;
 
     if (picturesLength === 0) {
-      alert("No pictures available for this area")
+      //$('error-div').html("NO PICSSSS")
+      //alert("No pictures available for this area")
     }
 
     for (var i = 0; i < picturesLength; i++) {
