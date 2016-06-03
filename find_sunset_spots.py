@@ -17,7 +17,7 @@ CHECK_WEST = 500
 ROWS_CHECK = 5
 ROWS_FOR_DROPOFF = 5
 COLUMNS_FOR_DROPOFF = 5
-BOUNDING_BOX_WIDTH = 50
+BOUNDING_BOX = 50
 # Each index represents approximately .0186411357696567 miles
 MILES_PER_INDEX = 0.0186411357696567
 
@@ -68,6 +68,8 @@ class SunsetSpotFinder(object):
         t0 = time.time()
         candidates_with_elevations = self._find_local_maxima()
         t1 = time.time()
+
+        print "Number after _find_local_maxima: {}".format(len(candidates_with_elevations))
 
         print "TIME _find_local_maxima: {}".format(t1 - t0)
     
@@ -199,6 +201,57 @@ class SunsetSpotFinder(object):
                scipy.hstack((data_dict["SW"], data_dict["S"], data_dict["SE"]))
                )))
 
+    def _new_argrelmax(self, order=BOUNDING_BOX, mode="clip"):
+        """Rewriting argrelmax as a nested loop because I do what I want.
+
+        0 axis is row, 1 axis is column, mode means clip the ends if out of index
+        """
+
+        data = self._cropped_elevation_array
+
+        # creates a numpy array from 0 to the length of the axis (aka array of indices)
+        locs_axis_0 = np.arange(0, data.shape[0])
+        locs_axis_1 = np.arange(0, data.shape[1])
+
+        # creates a numpy array of ones the size of the data with bool type
+        # all results are true to begin with
+        results = np.ones(data.shape, dtype=bool)
+        # create main array by indexing with a numpy array
+        main_axis_0 = data.take(locs_axis_0, axis=0, mode=mode)
+        main_axis_1 = data.take(locs_axis_1, axis=1, mode=mode)
+
+        # the first loop will look at the rows only
+        # use xrange because it's a generator
+        # go through all the offsets to examine
+        # look to the right and left for every shift (up to bounding box)
+        for shift in xrange(1, order + 1):
+            # create 2 arrays, one shifted to the right and one to the left
+            # by 1 index
+            plus_axis_0 = data.take(locs_axis_0 + shift, axis=0, mode=mode)
+            minus_axis_0 = data.take(locs_axis_0 - shift, axis=0, mode=mode)
+
+            # binary operator, if either are false will return false
+            # compares 2 matrices
+            # np.greater will return 1 if main_axis is greater than the plus axis
+            results &= np.greater(main_axis_0, plus_axis_0)
+            results &= np.greater(main_axis_0, minus_axis_0)
+            # if nothing is true, return
+            if(~results.any()):
+                break
+
+        # the second loop will look at the columns
+        # unlike the first loop, the results do not all start as 1 but start
+        # with the boolean values of the results from the loop over the rows
+        for shift in xrange(1, order + 1):
+            plus_axis_1 = data.take(locs_axis_1 + shift, axis=1, mode=mode)
+            minus_axis_1 = data.take(locs_axis_1 - shift, axis=1, mode=mode)
+            
+            results &= np.greater(main_axis_1, plus_axis_1)
+            results &= np.greater(main_axis_1, minus_axis_1)
+
+        return np.where(results)
+
+
     def _find_local_maxima(self):
         """Find local maxima of 2D array and return positions in array.
 
@@ -217,7 +270,7 @@ class SunsetSpotFinder(object):
         (array([0]), array([1]))
 
         For every point returned by argrelmax, check if local maxima condition 
-        still true when looking at an area of about FIXME BOUNDING_BOX_WIDTH
+        still true when looking at an area of about FIXME BOUNDING_BOX
 
         The function returns all local maximums in a list in the form:
         [((row, column), relative_elevation), ... ]
@@ -226,7 +279,10 @@ class SunsetSpotFinder(object):
         """
 
         t0 = time.time()
-        local_maxima = scipy.signal.argrelmax(self._cropped_elevation_array)
+        # local_maxima = scipy.signal.argrelmax(self._cropped_elevation_array, 
+        #                                       1, 100)
+        local_maxima = self._new_argrelmax()
+
         t1 = time.time()
 
         print "TIME BREAKDOWN _local_maxima: argrelmax {}".format(t1 - t0)
@@ -256,7 +312,7 @@ class SunsetSpotFinder(object):
                                                     elevation))
 
         t1 = time.time()
-        print "TIME BREAKDOWN _local_maxima: check bounding_box {}".format(t1 - t0)
+        print "TIME BREAKDOWN _local_maxima: check BOUNDING_BOX {}".format(t1 - t0)
 
         return candidates_with_elevations
 
@@ -439,11 +495,11 @@ class SunsetSpotFinder(object):
         10 indices for now
         """
 
-        rows_lower_bound = max(-(BOUNDING_BOX_WIDTH / 2) + candidate_point[0], 0)
-        rows_upper_bound = min(candidate_point[0] + (BOUNDING_BOX_WIDTH / 2), 
+        rows_lower_bound = max(-(BOUNDING_BOX) + candidate_point[0], 0)
+        rows_upper_bound = min(candidate_point[0] + (BOUNDING_BOX), 
                                len(self._cropped_elevation_array))
-        column_lower_bound = max(-(BOUNDING_BOX_WIDTH / 2) + candidate_point[1], 0)
-        column_upper_bound = min(candidate_point[1] + (BOUNDING_BOX_WIDTH / 2), 
+        column_lower_bound = max(-(BOUNDING_BOX) + candidate_point[1], 0)
+        column_upper_bound = min(candidate_point[1] + (BOUNDING_BOX), 
                                  len(self._cropped_elevation_array))
 
         # maybe change the following by passing the elevation with the candidate point?
@@ -570,6 +626,6 @@ class SunsetSpotFinder(object):
         return "n%sw%s.img" % (n, w)
 
 
-test = SunsetSpotFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 20)
-print test.pick_best_points()
+# test = SunsetSpotFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 20)
+# print test.pick_best_points()
 
