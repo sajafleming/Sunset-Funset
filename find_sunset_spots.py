@@ -26,7 +26,7 @@ OVERLAPPING_INDICES = 12
 # Each index represents approximately .0186411357696567 miles
 MILES_PER_INDEX = 0.0186411357696567
 
-class SunsetSpotFinder(object):
+class SunsetViewFinder(object):
     """Find the best sunset viewing spots"""
 
     def __init__(self, latlong, elevation_array_n_bound, 
@@ -61,7 +61,7 @@ class SunsetSpotFinder(object):
         """
 
         # Convert the search radius from miles to number of indices
-        self._radius_in_indices = SunsetSpotFinder._convert_radius_to_indices(
+        self._radius_in_indices = SunsetViewFinder._convert_radius_to_indices(
                                   self._search_radius)
 
         # Create a numpy 2D array with elevation data surrounding the user's 
@@ -186,7 +186,7 @@ class SunsetSpotFinder(object):
             if os.path.isfile(filepath): 
                 # Add the array to the dictionary and crop by 12
                 # on right and bottom
-                data_dict[file_key] = SunsetSpotFinder._read_img_file(
+                data_dict[file_key] = SunsetViewFinder._read_img_file(
                     filepath)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
 
             else:
@@ -195,7 +195,7 @@ class SunsetSpotFinder(object):
                 # Make array of all zeros if file doesn't exist
                 # Using an array from a file I know exists to know what 
                 # dimensions are
-                look_alike = SunsetSpotFinder._read_img_file(
+                look_alike = SunsetViewFinder._read_img_file(
                     "/Users/Sarah/PROJECT/imgfiles/n33w117.img") # TODO: move 
                 # n33w117.img to a constant
 
@@ -640,6 +640,6 @@ class SunsetSpotFinder(object):
         return arr
 
 
-# test = SunsetSpotFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 20)
+# test = SunsetViewFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 20)
 # print test.pick_best_points()
 

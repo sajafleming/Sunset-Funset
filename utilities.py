@@ -37,7 +37,7 @@ def create_filename(n, w):
     return "n%sw%s.img" % (n, w)
 
 # was only using with validation, maybe remove this function
-# def create_filepath(filename, filepath=DEFAULT_IMG_FILE_ROOT):
-#     """Create filepath for a given .img file"""
+def create_filepath(filename, filepath=DEFAULT_IMG_FILE_ROOT):
+    """Create filepath for a given .img file"""
 
-#     return filepath + filename
+    return filepath + filename
