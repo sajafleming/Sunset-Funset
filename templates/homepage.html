@@ -1,15 +1,49 @@
 {% extends "base.html" %}
 {% block content %} 
 
-<div class="container">
-  <form id="user-input-form">
+<!-- my logo -->
+<!-- <div class="container">
+  <img src="http://localhost/logo.jpg" />
+</div> -->
+
+<!-- Nav bar -->
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">
+        <img alt="Brand" src="../static/logosmall.jpeg">
+      </a>
+    </div>      
+      <form id="user-input-form">
+        <div>
+          Find your sunset: <input type="text" name="user-location" id="user-textbox">
+          <input type="submit" value="Search" class="btn btn-info-outline" id="submit-location">
+        </div>
+        <div class="navbar-right">
+          <li class="btn-group">
+            <button data-toggle="dropdown" class="btn btn-default dropdown-toggle">Radius: <b class="caret"></b></button>
+            <ul class="dropdown-menu">
+              <li><input type="radio" id="1" name="radius" value="1"><label for="1">1 mile </label></li>
+              <li><input type="radio" id="2" name="radius" value="2"><label for="2"> 2 miles </label></li>
+              <li><input type="radio" id="5" name="radius" value="5"><label for="5">5 miles </label></li>
+              <li><input type="radio" id="10" name="radius" value="10"><label for="10">10 miles </label></li>
+            </ul>
+          </li>
+        </div>
+      </form>
+  </div>
+</nav>
+
+<!-- <div class="container"> -->
+<!--   <form id="user-input-form">
       Find your sunset: <input type="text" name="user-location" id="user-textbox">
       <input type="submit" value="Search" class="btn btn-info-outline" id="submit-location"><br>
       Radius:
       <label class="radio-inline">
           <input type="radio" name="radius" value="1"> 1 mile<br>
       </label>
-      <label class="radio-inline"> 
+      <label class="radio-inline">        
           <input type="radio" name="radius" value="2"> 2 miles<br>
       </label>
       <label class="radio-inline">
@@ -21,12 +55,22 @@
       <label class="radio-inline">
           <input type="radio" name="radius" value="20"> 20 miles<br>
       </label>
-  </form>
+  </form> -->
+<!-- </div> -->
+
+<div id="error-modal" class="modal">
+
+  <!-- Modal content -->
+  <div class="modal-content">
+    <span class="close">×</span>
+    <img src="../static/notavailable.jpg" />
+  </div>
+
 </div>
 
 <!-- Google Map -->
 
-<div class="container" id="googleMap" style="width:1000px;height:300px;"></div>
+<div class="container" id="googleMap" style="width:100%;height:300px;"></div>
 
 <!-- Carousel -->
 
