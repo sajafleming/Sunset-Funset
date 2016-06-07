@@ -27,6 +27,10 @@ form {
     color: white;
 }
 
+.btn:focus {
+  outline: none;
+  }
+
 #user-textbox {
     height: 30px;
     width: 350px;
@@ -39,6 +43,8 @@ form {
     height: 300px;*/ 
     overflow: hidden; 
     text-align:center;
+    padding-top: 7px;
+    padding-left: 20px;
 }
 
 .my-img {
@@ -52,19 +58,6 @@ form {
   margin:5px 20px;
   /*padding:5px;*/
 }
-
-/*#myProgress {
-    position: relative;
-    width: 100%;
-    height: 5px;
-    background-color: grey;
-}
-#myBar {
-    position: absolute;
-    width: 1%;
-    height: 100%;
-    background-color: green;
-}*/
 
 /* Carousel styling */
 .multi-item-carousel .carousel-inner > .item {
@@ -98,11 +91,6 @@ form {
 .carousel-control {
   background-image: none!important;
 }
-
-/*.carousel-inner {
-  margin: auto!important;
-  text-align: center!important;
-}*/
 
 .modal {
     display: none; /* Hidden by default */
