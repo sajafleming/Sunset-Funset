@@ -35,22 +35,22 @@ form {
 
 /* class of div containing image*/
 .col-xs-4 { 
-    width: 300px; 
-    height: 300px; 
+    /*width: 300px; 
+    height: 300px;*/ 
     overflow: hidden; 
-    text-align:center
+    text-align:center;
 }
 
 .my-img {
   /*clip:rect(0px,300px,300px,0px);*/
   /*object-fit: none;*/
-  /*height: 300px;*/
-  /*width: 300px;*/
-  width: 100%;
-  height: 100%;
+  height: 300px;
+  width: 300px;
+  /*width: 100%;
+  height: 100%;*/
   display: inline-block;
   margin:5px 20px;
-  padding:5px;
+  /*padding:5px;*/
 }
 
 /*#myProgress {
