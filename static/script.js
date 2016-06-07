@@ -3,9 +3,6 @@ $(document).ready(function () {
 
   $('.multi-item-carousel').hide()
 
-  // do not need to initialize since I have it wrapped in function ready
-  // function initialize() {
-
   var mapProp = {
     center: new google.maps.LatLng(37.7749,-122.4194),
     zoom:10,
@@ -58,7 +55,9 @@ $(document).ready(function () {
     evt.preventDefault()
     // clear existing pictures in carousel
     $('.carousel-inner').empty();
-    geocodeAddress(geocoder, map);
+      geocodeAddress(geocoder, map);
+    // clear carousel arrows
+    $('.multi-item-carousel').hide()
   });
   $('#user-textbox').submit(function(evt) {
     geocodeAddress(geocoder, map);
@@ -82,7 +81,7 @@ $(document).ready(function () {
     $('#error-modal').css('display', 'none');
   }
 
-    // Bias the autocomplete object to the user's geographical location,
+  // Bias the autocomplete object to the user's geographical location,
   // as supplied by the browser's 'navigator.geolocation' object.
   function geolocate() {
     if (navigator.geolocation) {
@@ -124,7 +123,7 @@ $(document).ready(function () {
         var params = {"lat": lat, "lng": lng, 
           "radio": $('input[name=radius]:checked').val()};
 
-          // ajax to get sunset latlongs and pictures
+        // ajax to get sunset latlongs and pictures
         $.get("/sunset-spots", params, plotSunsetSpots);
 
         // plot the original point
@@ -171,19 +170,8 @@ $(document).ready(function () {
 
 
   function addMarker(myLatLng, urls) {
-
-    // console.log(myLatLng);
-    // console.log(map);
-
-    // TODO: fix location of this custom pin
-    // var icon = {
-    //   url: "http://oi63.tinypic.com/2b8sv6.jpg"  // url
-    //   // scaledSize: new google.maps.Size(100, 100), // scaled size
-    //   // origin: new google.maps.Point(0, 0), // origin
-    //   // anchor: new google.maps.Point(0, 100) // anchor
-    // };
     
-    var image = "http://i66.tinypic.com/17wjro.png"; // "http://oi63.tinypic.com/2b8sv6.jpg"
+    var image = "http://maps.google.com/mapfiles/ms/icons/red-dot.png"; // smaller pin
     var marker = new google.maps.Marker({
       position: myLatLng,
       map: map,
@@ -253,6 +241,5 @@ $(document).ready(function () {
       }
     });
   }
-
 
 });
