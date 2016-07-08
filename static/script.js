@@ -6,7 +6,7 @@ $(document).ready(function () {
   var mapProp = {
     center: new google.maps.LatLng(37.7749,-122.4194),
     zoom:10,
-    mapTypeId:google.maps.MapTypeId.ROADMAP
+    mapTypeId:google.maps.MapTypeId.TERRAIN
   };
 
   // new google maps object
@@ -218,7 +218,6 @@ $(document).ready(function () {
       html += '"><div class="col-xs-4"><a href="#"><img src="';
       html += pic + '" class="my-img"></a></div></div>';
       $('.carousel-inner').append(html);
-      //$('<div class="item"><div class="col-xs-4"><a href="#1"><img src="' + pic + '" class="img-responsive"></a></div></div>').appendTo('.carousel-inner');
     }
 
     // bootstrap carousel

@@ -2,14 +2,18 @@
 
 from os import rename, listdir
 
-def rename_files(list_of_filenames):
+ORIGIN_DIRECTORY = "/Users/Sarah/PROJECT/TNMDownloadManager/"
+DESTINATION_DIRECTORY = "/Users/Sarah/PROJECT/imgfiles/"
 
-    for name in list_of_filenames:
+for dir_name in listdir(ORIGIN_DIRECTORY):
+    if "USGS" not in dir_name:
+        continue
+    for name in listdir(ORIGIN_DIRECTORY + dir_name):
+        if not name.endswith(".img"):
+            continue
+
         new_name = name[3:-6]
 
         # rename file
-        rename("/Users/Sarah/PROJECT/imgfiles/" + name, "/Users/Sarah/PROJECT/imgfiles/" + new_name + ".img")
-
-list_of_filenames = listdir("/Users/Sarah/PROJECT/imgfiles/")
-    
-rename_files(list_of_filenames)
+        rename(ORIGIN_DIRECTORY + dir_name + "/" + name,
+            DESTINATION_DIRECTORY + new_name + ".img")

@@ -23,17 +23,13 @@ app.jinja_env.undefined = StrictUndefined
 def home():
     """Homepage"""
 
-    # skeleton this
-
     return render_template("homepage.html")
 
+# @app.route('/intro')
+# def intro():
+#     """Intro page"""
 
-@app.route('/intro')
-def intro():
-    """Intro page"""
-
-    return render_template("intro.html")
-
+#     return render_template("intro.html")
 
 @app.route('/data-not-available')
 def notintro():
@@ -50,8 +46,9 @@ def find_points():
     lat = float(request.args.get("lat"))
     lng = float(request.args.get("lng"))
 
+    # get value of the radio button for search radius
     radius = request.args.get("radio")
-    print "HELLO" * 5
+    print "RADIUS" * 5
     print radius
 
     latlong = (lat, lng)
@@ -63,6 +60,7 @@ def find_points():
     n, w = get_filename_n_w(latlong)
     filename = create_filename(n, w)
     filepath = create_filepath(filename)
+    print filename
 
     # validate that there is data for the location the user wants to search
     if os.path.isfile(filepath):
@@ -108,13 +106,9 @@ def find_points():
         results = jsonify(sunset_spots=final_data)
         
         return results
-        # return jsonify(hella)
-        # google_json = request.form.get('user-location')
-        # print google_json
 
     else:
         return jsonify(error="Data not available")
-        #return redirect("/data-not-available")
 
 
 if __name__ == "__main__":
@@ -124,7 +118,6 @@ if __name__ == "__main__":
 
     # Use the DebugToolbar
     # DebugToolbarExtension(app)
-
     connect_to_db(app)
 
     app.run()

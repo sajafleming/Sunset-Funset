@@ -14,7 +14,7 @@ def get_filename_n_w(latlong):
     rounded integer name of the corresponding NW coordinate. Note the exact NESW
     bounds of every tile are stored in a database.
 
-    >>>get_filename_n_w((38.0016666667, -118.001666667))
+    >>> get_filename_n_w((38.0016666667, -118.001666667))
     (39, 119)
     """
 
@@ -30,8 +30,8 @@ def get_filename_n_w(latlong):
 def create_filename(n, w):
     """Given integer n and w coordinates, create a filename string
 
-    >>>create_filename(33, 117)
-    n33w117.img
+    >>> create_filename(33, 117)
+    'n33w117.img'
     """
 
     return "n%sw%s.img" % (n, w)
