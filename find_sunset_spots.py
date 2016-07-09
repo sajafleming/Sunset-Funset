@@ -10,7 +10,7 @@ from math import ceil
 from scipy.ndimage.filters import generic_filter as gf
 from flask_sqlalchemy import SQLAlchemy
 from operator import itemgetter
-from utilities import get_filename_n_w, create_filename
+from utilities import get_filename_n_w, create_filename, create_filepath
 
 # TODO: possibly move all file manipulation to utilities
 DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
@@ -180,7 +180,8 @@ class SunsetViewFinder(object):
             # TODO: default img file root to attribute or move file functions 
             # to utilites.py
             # create filepath for each filename
-            filepath = DEFAULT_IMG_FILE_ROOT + filename_dict[file_key]
+            # filepath = DEFAULT_IMG_FILE_ROOT + filename_dict[file_key]
+            filepath = create_filepath(filename_dict[file_key])
 
             # Check to make sure the file exists
             if os.path.isfile(filepath): 

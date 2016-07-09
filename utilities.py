@@ -3,7 +3,9 @@
 from math import ceil
 
 
-DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
+AWS_IMG_FILE_ROOT = "http://s3.amazonaws.com/sunsetfunset/"
+LOCAL_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
+
 
 
 def get_filename_n_w(latlong):
@@ -36,8 +38,9 @@ def create_filename(n, w):
 
     return "n%sw%s.img" % (n, w)
 
-# was only using with validation, maybe remove this function
-def create_filepath(filename, filepath=DEFAULT_IMG_FILE_ROOT):
+# can use locally or with AWS bucket
+def create_filepath(filename, filepath=AWS_IMG_FILE_ROOT):
     """Create filepath for a given .img file"""
+
 
     return filepath + filename
