@@ -74,11 +74,25 @@ def find_points():
         top_left_db_filename = top_left_filename.split(".")[0]
         print top_left_db_filename
 
-        # TODO: add condition for if the top left tile doesn't exist
+        # using database:
         # query db for exact coordinates of NW corner of master array
-        exact_coordinates = LatLong.query.filter_by(filename=top_left_db_filename).first()
-        exact_N_bound = exact_coordinates.n_bound
-        exact_W_bound = exact_coordinates.w_bound
+        # exact_coordinates = LatLong.query.filter_by(filename=top_left_db_filename).first()
+        # exact_N_bound = exact_coordinates.n_bound
+        # exact_W_bound = exact_coordinates.w_bound
+
+        top_left_filepath = create_filepath(top_left_filename)
+
+        if os.path.isfile(top_left_filename):
+            # if the top left file exists
+            exact_N_bound = n + 1 + .00166666666
+            exact_W_bound = - (w + 1 + .0016666667)
+
+        else:
+            # if the top left file does not exist use what would be the topleft 
+            # coordinates
+            exact_N_bound = n + 1+ .00166666666
+            exact_W_bound = - (w + 1 + .0016666667)
+            
 
         # call into utilities functions to get list of lat and longs for best sunset spots
         # sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound, radius)
