@@ -20,6 +20,11 @@ app.secret_key = "ABC"
 # Raise error if trying to use undefined variable (otherwise it won't)
 app.jinja_env.undefined = StrictUndefined
 
+app.client = boto3.client(
+    's3',
+    aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+    aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+)
 
 @app.route('/')
 def home():
@@ -66,14 +71,13 @@ def find_points():
     # # validate that there is data for the location the user wants to search
     # if os.path.isfile(filepath):
 
-    s3 = boto3.resource('s3')
     exists = True
         
     try:
-        s3.Object('sunsetfunset', filename).load()
+        app.client.get_object(Bucket='sunsetfunset', Key=filename)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
-        exists = False
+            exists = False
         else:
             print e
             raise e
