@@ -9,6 +9,8 @@ from flask_sqlalchemy import SQLAlchemy
 from model import connect_to_db, db, LatLong
 from get_photos import data_to_urls, request_flickr_data
 import os
+import boto3
+import botocore
 
 app = Flask(__name__)
 
@@ -48,23 +50,36 @@ def find_points():
 
     # get value of the radio button for search radius
     radius = request.args.get("radio")
-    print "RADIUS" * 5
-    print radius
+    print "RADIUS: {}".format(radius)
 
     latlong = (lat, lng)
 
     print "\n"
     print latlong
 
-
     n, w = get_filename_n_w(latlong)
     filename = create_filename(n, w)
     filepath = create_filepath(filename)
     print filename
 
-    # validate that there is data for the location the user wants to search
-    if os.path.isfile(filepath):
+    # # for local
+    # # validate that there is data for the location the user wants to search
+    # if os.path.isfile(filepath):
+
+    s3 = boto3.resource('s3')
+    exists = True
         
+    try:
+        s3.Object('sunsetfunset', filename).load()
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == "404":
+        exists = False
+        else:
+            print e
+            raise e
+
+    # if file in the bucket
+    if exists:
 
         top_left_filename = create_filename(n + 1, w + 1) # want to add 1 to w here because filename represented as positive
         print "#############################################"
