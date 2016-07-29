@@ -11,6 +11,8 @@ from get_photos import data_to_urls, request_flickr_data
 import os
 import boto3
 import botocore
+import numpy as np
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -74,7 +76,9 @@ def find_points():
     exists = True
         
     try:
-        app.client.get_object(Bucket='sunsetfunset', Key=filename)
+        response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
+        array = np.load(BytesIO(response['Body'].read()))
+        print array
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
             exists = False
