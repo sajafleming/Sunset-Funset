@@ -13,6 +13,7 @@ from scipy.ndimage.filters import generic_filter as gf
 from flask_sqlalchemy import SQLAlchemy
 from operator import itemgetter
 from utilities import get_filename_n_w, create_filename, create_filepath
+from flask import Flask
 
 # TODO: possibly move all file manipulation to utilities
 DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
@@ -27,6 +28,13 @@ DEGREES_PER_INDEX = 0.0002777777777685509
 OVERLAPPING_INDICES = 12
 # Each index represents approximately .0186411357696567 miles
 MILES_PER_INDEX = 0.0186411357696567
+
+app = Flask(__name__)
+app.client = boto3.client(
+    's3',
+    aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+    aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+)
 
 class SunsetViewFinder(object):
     """Find the best sunset viewing spots"""
@@ -179,16 +187,11 @@ class SunsetViewFinder(object):
 
         for file_key in filename_dict:
 
-            # TODO: default img file root to attribute or move file functions 
-            # to utilites.py
-            # create filepath for each filename
-            # filepath = DEFAULT_IMG_FILE_ROOT + filename_dict[file_key]
-            filepath = create_filepath(filename_dict[file_key])
-            
             try:
-                response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
+                response = app.client.get_object(Bucket='sunsetfunset', Key=file_key)
                 array = np.load(BytesIO(response['Body'].read()))
                 print "ARRAY: {}".format(array)
+                data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] == "404":
                     exists = False
@@ -203,12 +206,14 @@ class SunsetViewFinder(object):
                     data_dict[file_key] = np.zeros_like(
                         look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
 
+            # filepath = create_filepath(filename_dict[file_key])
+
             # Check to make sure the file exists
             # if os.path.isfile(filepath): 
             #     # Add the array to the dictionary and crop by 12
             #     # on right and bottom
             #     data_dict[file_key] = SunsetViewFinder._read_img_file(
-            #         filepath)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
+            #         filepath)[]
 
 
             # else:
