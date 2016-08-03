@@ -33,13 +33,13 @@ def create_filename(n, w):
     """Given integer n and w coordinates, create a filename string
 
     >>> create_filename(33, 117)
-    'n33w117.img'
+    'n33w117.npy'
     """
 
-    if len(w) == 3:
-        return "n%sw%s.img" % (n, w)
+    if len(str(w)) == 3:
+        return "n%sw%s.npy" % (n, w)
     else: 
-        return "n" + n + "w" + "0" + w + ".img"
+        return "n" + str(n) + "w" + "0" + str(w) + ".npy"
 
 
 # can use locally or with AWS bucket
