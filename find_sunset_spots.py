@@ -5,6 +5,8 @@ import scipy.signal
 import numpy as np
 import os
 import time
+import boto3
+import botocore
 from osgeo import gdal
 from math import ceil
 from scipy.ndimage.filters import generic_filter as gf
@@ -182,28 +184,47 @@ class SunsetViewFinder(object):
             # create filepath for each filename
             # filepath = DEFAULT_IMG_FILE_ROOT + filename_dict[file_key]
             filepath = create_filepath(filename_dict[file_key])
+            
+            try:
+                response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
+                array = np.load(BytesIO(response['Body'].read()))
+                print "ARRAY: {}".format(array)
+            except botocore.exceptions.ClientError as e:
+                if e.response['Error']['Code'] == "404":
+                    exists = False
+                    print "got here"
+                else:
+                    print e
+                    raise e
+                    print "created look_alike with zeros"
+                    look_alike = SunsetViewFinder._read_img_file(
+                    "/Users/Sarah/PROJECT/imgfiles/n33w117.img")
+
+                    data_dict[file_key] = np.zeros_like(
+                        look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
 
             # Check to make sure the file exists
-            if os.path.isfile(filepath): 
-                # Add the array to the dictionary and crop by 12
-                # on right and bottom
-                data_dict[file_key] = SunsetViewFinder._read_img_file(
-                    filepath)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
+            # if os.path.isfile(filepath): 
+            #     # Add the array to the dictionary and crop by 12
+            #     # on right and bottom
+            #     data_dict[file_key] = SunsetViewFinder._read_img_file(
+            #         filepath)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
 
-            else:
+
+            # else:
                 # TODO: actually fix this hardcode dimensions and use np.zeros() 
                 # xhere
                 # Make array of all zeros if file doesn't exist
                 # Using an array from a file I know exists to know what 
                 # dimensions are
-                look_alike = SunsetViewFinder._read_img_file(
-                    "/Users/Sarah/PROJECT/imgfiles/n33w117.img") # TODO: move 
+                # look_alike = SunsetViewFinder._read_img_file(
+                    # "/Users/Sarah/PROJECT/imgfiles/n33w117.img") # TODO: move 
                 # n33w117.img to a constant
 
                 # Use this array to make a look alike - will have same 
                 # dimensions with all zeros
-                data_dict[file_key] = np.zeros_like(
-                    look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES] 
+                # data_dict[file_key] = np.zeros_like(
+                #     look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES] 
                     
         # Use scipy stacking to vertically concatenate 3 rows that are each 
         # horizontally concatenated over 3 columns
