@@ -14,6 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from operator import itemgetter
 from utilities import get_filename_n_w, create_filename, create_filepath
 from flask import Flask
+from io import BytesIO
 
 # TODO: possibly move all file manipulation to utilities
 DEFAULT_IMG_FILE_ROOT = "/Users/Sarah/PROJECT/imgfiles/"
@@ -185,10 +186,10 @@ class SunsetViewFinder(object):
         # filenams_dict but with the filename read as an arrays as the value
         data_dict = {}
 
-        for file_key in filename_dict:
+        for file_key, filename in filename_dict.iteritems():
 
             try:
-                response = app.client.get_object(Bucket='sunsetfunset', Key=file_key)
+                response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
                 array = np.load(BytesIO(response['Body'].read()))
                 print "ARRAY: {}".format(array)
                 data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
@@ -198,10 +199,10 @@ class SunsetViewFinder(object):
                     print "got here"
                 else:
                     print e
-                    raise e
+                    print filename
+                    # raise e
                     print "created look_alike with zeros"
-                    look_alike = SunsetViewFinder._read_img_file(
-                    "/Users/Sarah/PROJECT/imgfiles/n33w117.img")
+                    look_alike = np.zeros((3612, 3612))
 
                     data_dict[file_key] = np.zeros_like(
                         look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
