@@ -36,7 +36,11 @@ def create_filename(n, w):
     'n33w117.img'
     """
 
-    return "n%sw%s.img" % (n, w)
+    if len(w) == 3:
+        return "n%sw%s.img" % (n, w)
+    else: 
+        return "n" + n + "w" + "0" + w + ".img"
+
 
 # can use locally or with AWS bucket
 def create_filepath(filename, filepath=AWS_IMG_FILE_ROOT):

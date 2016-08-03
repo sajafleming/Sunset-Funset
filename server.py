@@ -66,7 +66,7 @@ def find_points():
     filename = create_filename(n, w)
     filepath = create_filepath(filename)
     print "FILENAME: {}".format(filename)
-    print "FILENAME: {}".format(filepath)
+    print "FILEPATH: {}".format(filepath)
 
     # # for local
     # # validate that there is data for the location the user wants to search
