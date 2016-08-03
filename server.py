@@ -60,14 +60,13 @@ def find_points():
     print "RADIUS: {}".format(radius)
 
     latlong = (lat, lng)
-
-    print "\n"
-    print latlong
+    print "USER LATLONG: {}".format(latlong)
 
     n, w = get_filename_n_w(latlong)
     filename = create_filename(n, w)
     filepath = create_filepath(filename)
-    print filename
+    print "FILENAME: {}".format(filename)
+    print "FILENAME: {}".format(filepath)
 
     # # for local
     # # validate that there is data for the location the user wants to search
@@ -78,16 +77,19 @@ def find_points():
     try:
         response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
         array = np.load(BytesIO(response['Body'].read()))
-        print array
+        print "ARRAY: {}".format(array)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
             exists = False
+            print "got here"
         else:
             print e
             raise e
 
     # if file in the bucket
     if exists:
+
+        print "file name exists in bucket"
 
         top_left_filename = create_filename(n + 1, w + 1) # want to add 1 to w here because filename represented as positive
         print "#############################################"
