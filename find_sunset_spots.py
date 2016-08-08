@@ -191,7 +191,7 @@ class SunsetViewFinder(object):
             try:
                 response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
                 array = np.load(BytesIO(response['Body'].read()))
-                print "ARRAY: {}".format(array)
+                # print "ARRAY: {}".format(array)
                 data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] == "404":
@@ -201,7 +201,7 @@ class SunsetViewFinder(object):
                     print e
                     print filename
                     # raise e
-                    print "created look_alike with zeros"
+                    # print "created look_alike with zeros"
                     look_alike = np.zeros((3612, 3612))
 
                     data_dict[file_key] = np.zeros_like(
