@@ -190,7 +190,7 @@ class SunsetViewFinder(object):
 
             try:
                 response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
-                array = np.load(BytesIO(response['Body'].read()))
+                array = np.load(BytesIO(response['Body'].read())).astype(np.float32, copy=False)
                 # print "ARRAY: {}".format(array)
                 data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
             except botocore.exceptions.ClientError as e:
