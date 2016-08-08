@@ -77,7 +77,7 @@ def find_points():
     try:
         response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
         array = np.load(BytesIO(response['Body'].read()))
-        print "ARRAY: {}".format(array)
+        # print "ARRAY: {}".format(array)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
             exists = False
