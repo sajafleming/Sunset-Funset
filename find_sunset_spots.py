@@ -7,7 +7,7 @@ import os
 import time
 import boto3
 import botocore
-from osgeo import gdal
+# from osgeo import gdal
 from math import ceil
 from scipy.ndimage.filters import generic_filter as gf
 from flask_sqlalchemy import SQLAlchemy
@@ -651,21 +651,21 @@ class SunsetViewFinder(object):
 
         return candidates_with_ranking[:100]
 
-    @staticmethod
-    def _read_img_file(filepath):
-        """Read .img file as 2D numpy array given a filepath. 
+    # @staticmethod
+    # def _read_img_file(filepath):
+    #     """Read .img file as 2D numpy array given a filepath. 
 
-        The .img files are raster data. The osgeo library provides a way to 
-        open these files and read them as a numpy 2D array.
+    #     The .img files are raster data. The osgeo library provides a way to 
+    #     open these files and read them as a numpy 2D array.
 
-        Each array of 1 arc second should have dimensions 3612 x 3612. 
-        """
+    #     Each array of 1 arc second should have dimensions 3612 x 3612. 
+    #     """
 
-        geo = gdal.Open(filepath)
+    #     geo = gdal.Open(filepath)
        
-        arr = geo.ReadAsArray()
+    #     arr = geo.ReadAsArray()
 
-        return arr
+    #     return arr
 
 
 # test = SunsetViewFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 20)
