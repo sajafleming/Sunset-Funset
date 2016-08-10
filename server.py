@@ -76,7 +76,7 @@ def find_points():
         
     try:
         response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
-        array = np.load(BytesIO(response['Body'].read()))
+        # array = np.load(BytesIO(response['Body'].read()))host
         # print "ARRAY: {}".format(array)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
@@ -153,10 +153,10 @@ def find_points():
 if __name__ == "__main__":
     # We have to set debug=True here, since it has to be True at the point
     # that we invoke the DebugToolbarExtension
-    app.debug = True
+    app.debug = False
 
     # Use the DebugToolbar
     # DebugToolbarExtension(app)
     connect_to_db(app)
 
-    app.run()
+    app.run(host="0.0.0.0", port=80)
