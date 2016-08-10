@@ -186,59 +186,57 @@ class SunsetViewFinder(object):
         # filenams_dict but with the filename read as an arrays as the value
         data_dict = {}
 
-        for file_key, filename in filename_dict.iteritems():
+        def get_row(filenames):
+            arrays = []
+            for filename in filenames:
+                try:
+                    response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
+                    array = np.load(BytesIO(response['Body'].read())).astype(np.float32, copy=False)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
+                    # print "ARRAY: {}".format(array)
+                    # data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
+                except botocore.exceptions.ClientError as e:
+                    if e.response['Error']['Code'] == "404":
+                        exists = False
+                        print "got here"
+                    else:
+                        print e
+                        print filename
+                        # raise e
+                        # print "created look_alike with zeros"
+                        array = np.zeros((3600, 3600))
+                arrays.append(array)
+            return scipy.hstack(arrays)
 
-            try:
-                response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
-                array = np.load(BytesIO(response['Body'].read())).astype(np.float32, copy=False)
-                # print "ARRAY: {}".format(array)
-                data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
-            except botocore.exceptions.ClientError as e:
-                if e.response['Error']['Code'] == "404":
-                    exists = False
-                    print "got here"
-                else:
-                    print e
-                    print filename
-                    # raise e
-                    # print "created look_alike with zeros"
-                    look_alike = np.zeros((3612, 3612))
-
-                    data_dict[file_key] = np.zeros_like(
-                        look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
-
-            # filepath = create_filepath(filename_dict[file_key])
-
-            # Check to make sure the file exists
-            # if os.path.isfile(filepath): 
-            #     # Add the array to the dictionary and crop by 12
-            #     # on right and bottom
-            #     data_dict[file_key] = SunsetViewFinder._read_img_file(
-            #         filepath)[]
+        return scipy.vstack((get_row([filename_dict["NW"], filename_dict["N"], filename_dict["NE"]]),
+                             get_row([filename_dict["W"], filename_dict["C"], filename_dict["E"]]),
+                             get_row([filename_dict["SW"], filename_dict["S"], filename_dict["SE"]])))
 
 
-            # else:
-                # TODO: actually fix this hardcode dimensions and use np.zeros() 
-                # xhere
-                # Make array of all zeros if file doesn't exist
-                # Using an array from a file I know exists to know what 
-                # dimensions are
-                # look_alike = SunsetViewFinder._read_img_file(
-                    # "/Users/Sarah/PROJECT/imgfiles/n33w117.img") # TODO: move 
-                # n33w117.img to a constant
+        # for file_key, filename in filename_dict.iteritems():
 
-                # Use this array to make a look alike - will have same 
-                # dimensions with all zeros
-                # data_dict[file_key] = np.zeros_like(
-                #     look_alike)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES] 
-                    
-        # Use scipy stacking to vertically concatenate 3 rows that are each 
-        # horizontally concatenated over 3 columns
-        return (scipy.vstack((
-               scipy.hstack((data_dict["NW"], data_dict["N"], data_dict["NE"])),
-               scipy.hstack((data_dict["W"], data_dict["C"], data_dict["E"])),
-               scipy.hstack((data_dict["SW"], data_dict["S"], data_dict["SE"]))
-               )))
+        #     try:
+        #         response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
+        #         array = np.load(BytesIO(response['Body'].read())).astype(np.float32, copy=False)
+        #         # print "ARRAY: {}".format(array)
+        #         data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
+        #     except botocore.exceptions.ClientError as e:
+        #         if e.response['Error']['Code'] == "404":
+        #             exists = False
+        #             print "got here"
+        #         else:
+        #             print e
+        #             print filename
+        #             # raise e
+        #             # print "created look_alike with zeros"
+        #             data_dict[file_key] = np.zeros((3600, 3600))
+ 
+        # # Use scipy stacking to vertically concatenate 3 rows that are each 
+        # # horizontally concatenated over 3 columns
+        # return (scipy.vstack((
+        #        scipy.hstack((data_dict["NW"], data_dict["N"], data_dict["NE"])),
+        #        scipy.hstack((data_dict["W"], data_dict["C"], data_dict["E"])),
+        #        scipy.hstack((data_dict["SW"], data_dict["S"], data_dict["SE"]))
+        #        )))
 
     def _new_argrelmax(self, order=BOUNDING_BOX, mode="clip"):
         """Find local maximums over a certain area (the order).
