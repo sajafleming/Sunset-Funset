@@ -23,29 +23,29 @@ $(document).ready(function () {
   }
 
   // map styling and colors
-  map.set('styles', [
-    {
-      featureType: 'water',
-      elementType: 'geometry',
-      stylers: [
-        { color: '#a3d2fe' },
-        { weight: 1.6 }
-      ]
-    }, {
-      featureType: "road.highway",
-      elementType: "geometry",
-      stylers: [
-        { color: "#fbe87d" },
-        { weight: 1 }
-      ]
-    }, { 
-      featureType: "landscape", 
-      elementType: "geometry", 
-      stylers: [ 
-        { hue: "#eceae4" }, 
-      ] 
-    } 
-  ]); 
+  // map.set('styles', [
+  //   {
+  //     featureType: 'water',
+  //     elementType: 'geometry',
+  //     stylers: [
+  //       { color: '#a3d2fe' },
+  //       { weight: 1.6 }
+  //     ]
+  //   }, {
+  //     featureType: "road.highway",
+  //     elementType: "geometry",
+  //     stylers: [
+  //       { color: "#fbe87d" },
+  //       { weight: 1 }
+  //     ]
+  //   }, { 
+  //     featureType: "landscape", 
+  //     elementType: "geometry", 
+  //     stylers: [ 
+  //       { hue: "#eceae4" }, 
+  //     ] 
+  //   } 
+  // ]); 
   
   // new google maps geocoder object
   var geocoder = new google.maps.Geocoder();
