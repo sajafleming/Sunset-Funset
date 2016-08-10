@@ -191,7 +191,7 @@ class SunsetViewFinder(object):
             for filename in filenames:
                 try:
                     response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
-                    array = np.load(BytesIO(response['Body'].read())).astype(np.float32, copy=False)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
+                    array = np.load(BytesIO(response['Body'].read())).astype(np.float16, copy=False)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
                     # print "ARRAY: {}".format(array)
                     # data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
                 except botocore.exceptions.ClientError as e:
@@ -203,13 +203,13 @@ class SunsetViewFinder(object):
                         print filename
                         # raise e
                         # print "created look_alike with zeros"
-                        array = np.zeros((3600, 3600))
+                        array = np.zeros((3600, 3600), dtype=np.float16)
                 arrays.append(array)
-            return scipy.hstack(arrays)
+            return np.hstack(arrays)
 
-        return scipy.vstack((get_row([filename_dict["NW"], filename_dict["N"], filename_dict["NE"]]),
-                             get_row([filename_dict["W"], filename_dict["C"], filename_dict["E"]]),
-                             get_row([filename_dict["SW"], filename_dict["S"], filename_dict["SE"]])))
+        return np.vstack((get_row([filename_dict["NW"], filename_dict["N"], filename_dict["NE"]]),
+                          get_row([filename_dict["W"], filename_dict["C"], filename_dict["E"]]),
+                          get_row([filename_dict["SW"], filename_dict["S"], filename_dict["SE"]])))
 
 
         # for file_key, filename in filename_dict.iteritems():
