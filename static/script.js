@@ -21,35 +21,15 @@ $(document).ready(function () {
       map.setCenter(initialLocation);
     });
   }
-
-  // map styling and colors
-  // map.set('styles', [
-  //   {
-  //     featureType: 'water',
-  //     elementType: 'geometry',
-  //     stylers: [
-  //       { color: '#a3d2fe' },
-  //       { weight: 1.6 }
-  //     ]
-  //   }, {
-  //     featureType: "road.highway",
-  //     elementType: "geometry",
-  //     stylers: [
-  //       { color: "#fbe87d" },
-  //       { weight: 1 }
-  //     ]
-  //   }, { 
-  //     featureType: "landscape", 
-  //     elementType: "geometry", 
-  //     stylers: [ 
-  //       { hue: "#eceae4" }, 
-  //     ] 
-  //   } 
-  // ]); 
   
   // new google maps geocoder object
   var geocoder = new google.maps.Geocoder();
-
+         
+  $('#submit-location').on('click', function () {
+    var $this = $(this);
+    $this.button('loading');
+  });
+         
   // getting values from user text box
   $('#user-input-form').submit(function(evt) {
     evt.preventDefault()
@@ -58,6 +38,11 @@ $(document).ready(function () {
       geocodeAddress(geocoder, map);
     // clear carousel arrows
     $('.multi-item-carousel').hide()
+    // loading button
+    $('#submit-location').button('loading');
+      setTimeout(function() {
+        $this.button('reset');
+      }, 8000);
   });
   $('#user-textbox').submit(function(evt) {
     geocodeAddress(geocoder, map);
@@ -165,6 +150,10 @@ $(document).ready(function () {
 
         markers.push(addMarker(myLatLng, sunsetCoordinates[i].urls));
     }
+
+    // stop loading button here (once points are plotted)
+      $('#submit-location').button('reset');
+
     }
   }
 
