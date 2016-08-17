@@ -54,22 +54,54 @@
 
 <!-- Google Map -->
 
-<div class="container" id="googleMap" style="width:100%;height:300px;"></div>
+<div class="container" id="googleMap"></div>
 
-<!-- Carousel -->
+<!-- Carousel, old way of viewing pics -->
 
-<div class="container" id="pictures">
+<!-- <div class="container" id="pictures">
   <div class="row">
     <div class="col-md-12">
       <div class="carousel slide multi-item-carousel" id="theCarousel">
-        <div class="row carousel-inner">
+        <div class="row carousel-inner"> -->
           <!-- place images from flickr here via javascript -->
-        </div>
+<!--         </div>
         <a class="left carousel-control" href="#theCarousel" data-slide="prev"><i class="glyphicon glyphicon-chevron-left"></i></a>
         <a class="right carousel-control" href="#theCarousel" data-slide="next"><i class="glyphicon glyphicon-chevron-right"></i></a>
       </div>
     </div>
   </div>
+</div> -->
+
+<!-- Modal for pics -->
+<!-- <div class="container text-center"> -->
+
+<div class="modal fade" id="modal-pics" role="dialog">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- Carousel -->
+      <div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+  
+        <div class="carousel slide" id="theCarousel">
+        <!-- Wrapper for slides -->
+          <div class="carousel-inner">
+            <!-- place images here from flickr via javascript -->
+            <div class="item active"></div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
+          <span class="glyphicon glyphicon-chevron-left"></span>
+        </a>
+        <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
+          <span class="glyphicon glyphicon-chevron-right"></span>
+        </a>
+      </div>
+
+    </div>
+  </div>
 </div>
+<!-- </div> -->
 
 {% endblock %}

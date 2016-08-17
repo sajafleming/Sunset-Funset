@@ -1,7 +1,7 @@
 "use strict";
 $(document).ready(function () {
 
-  $('.multi-item-carousel').hide()
+  // $('.multi-item-carousel').hide()
 
   var mapProp = {
     center: new google.maps.LatLng(37.7749,-122.4194),
@@ -34,18 +34,13 @@ $(document).ready(function () {
   $('#user-input-form').submit(function(evt) {
     evt.preventDefault()
     // clear existing pictures in carousel
-    $('.carousel-inner').empty();
-      geocodeAddress(geocoder, map);
+    //$('.carousel-inner').empty();
+    geocodeAddress(geocoder, map);
     // clear carousel arrows
-    $('.multi-item-carousel').hide()
-    // loading button
-    $('#submit-location').button('loading');
-      setTimeout(function() {
-        $this.button('reset');
-      }, 8000);
+    // $('.multi-item-carousel').hide()
   });
   $('#user-textbox').submit(function(evt) {
-    geocodeAddress(geocoder, map);
+    //geocodeAddress(geocoder, map);
   });
 
   // Get the HTML input element for the autocomplete search box
@@ -120,7 +115,7 @@ $(document).ready(function () {
         });
 
         google.maps.event.addListener(enteredLocation, 'click', function() {
-          $('#myModal').modal('show');
+          //$('#myModal').modal('show');
         });
 
         markers.push(enteredLocation)
@@ -168,6 +163,7 @@ $(document).ready(function () {
       // icon: image
     });
 
+    // listener for when marker clicked, success function is showpics
     marker.addListener('click', function(evt) { 
       showPictures(myLatLng, urls);
       // loop through and set each icon back to default, except for the first one (the point searched for)
@@ -177,12 +173,14 @@ $(document).ready(function () {
       // change the selected marker to the sunpin 
       this.setIcon("http://i66.tinypic.com/17wjro.png");
       // show carousel arrows
-      $('.multi-item-carousel').show()
+      // $('.multi-item-carousel').show()
+      $("#modal-pics").modal()
     });
 
     return marker;
   }
 
+  // new and improved modal to show pics <3
   function showPictures(latlong, urls) {
     $('.carousel-inner').empty();
 
@@ -204,31 +202,66 @@ $(document).ready(function () {
         html += ' active';
       }
 
-      html += '"><div class="col-xs-4"><a href="#"><img src="';
-      html += pic + '" class="my-img"></a></div></div>';
+      html += '"><img class="img-responsive" src="';
+      html += pic + '" class="my-img"></img></div>';
       $('.carousel-inner').append(html);
     }
 
-    // bootstrap carousel
-    $('.multi-item-carousel').carousel({
+    // bootstrap carousel - don't move on own
+    $('.carousel').carousel({
       interval: false
     })
 
-    $('.multi-item-carousel .item').each(function(){
-      var next = $(this).next();
-
-      if (!next.length) {
-        next = $(this).siblings(':first');
-      }
-      next.children(':first-child').clone().appendTo($(this));
-      
-      if (next.next().length>0) {
-        next.next().children(':first-child').clone().appendTo($(this));
-      }
-      else {
-        $(this).siblings(':first').children(':first-child').clone().appendTo($(this));
-      }
-    });
   }
+
+
+  // old bootstrap carousel
+  // function showPictures(latlong, urls) {
+  //   $('.carousel-inner').empty();
+
+  //   // add pictures for pin selected
+  //   var picturesLength = urls.length;
+
+  //   if (picturesLength === 0) {
+  //     //$('error-div').html("NO PICSSSS")
+  //     //alert("No pictures available for this area")
+  //   }
+
+  //   for (var i = 0; i < picturesLength; i++) {
+  //     console.log(urls[i])
+
+  //     var pic = urls[i]
+  //     var html = '<div class="item';
+
+  //     if (i === 0) {
+  //       html += ' active';
+  //     }
+
+  //     html += '"><div class="col-xs-4"><a href="#"><img src="';
+  //     html += pic + '" class="my-img"></a></div></div>';
+  //     $('.carousel-inner').append(html);
+  //   }
+
+  //   // bootstrap carousel
+  //   $('.multi-item-carousel').carousel({
+  //     interval: false
+  //   })
+
+  //   $('.multi-item-carousel .item').each(function(){
+  //     var next = $(this).next();
+
+  //     if (!next.length) {
+  //       next = $(this).siblings(':first');
+  //     }
+  //     next.children(':first-child').clone().appendTo($(this));
+      
+  //     if (next.next().length>0) {
+  //       next.next().children(':first-child').clone().appendTo($(this));
+  //     }
+  //     else {
+  //       $(this).siblings(':first').children(':first-child').clone().appendTo($(this));
+  //     }
+  //   });
+  // }
 
 });
