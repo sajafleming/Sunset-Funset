@@ -194,36 +194,36 @@ class SunsetViewFinder(object):
         # if a corner is needed, add 3 tiles -> total will be 4 tiles
         # call stack arrays function with top left, top right, bottom left, 
         # bottom right
+
+        # NO THIS IS SO WRONG
         if tiles_needed["NW"]:
             arrays = stage_arrays([filename_dict["NW"], filename_dict["N"], 
                                    filename_dict["W"], filename_dict["C"]])
             final_array = stack_four(arrays)
-        # add 1 tile -> two total
-        elif tiles_needed["N"]:
-            arrays = stage_arrays([filename_dict["N"], filename_dict["C"]])
-            final_array = vstack(arrays)
-
         if tiles_needed["NE"]:
             arrays = stage_arrays([filename_dict["N"], filename_dict["NE"], 
                                   filename_dict["C"], filename_dict["E"]])
             final_array = stack_four(arrays)
-        elif tiles_needed["S"]:
-            arrays = stage_arrays([filename_dict["C"], filename_dict["S"]])
-            final_array = vstack(arrays)
-
         if tiles_needed["SW"]:
             arrays = stage_arrays([filename_dict["W"], filename_dict["C"], 
                                   filename_dict["SW"], filename_dict["S"]])
             final_array = stack_four(arrays)
-        elif tiles_needed["E"]:
-            arrays = stage_arrays([filename_dict["C"], filename_dict["E"]])
-            final_array = hstack(arrays)
-
         if tiles_needed["SE"]:
             arrays = stage_arrays([filename_dict["C"], filename_dict["E"], 
                                   filename_dict["S"], filename_dict["SE"]])
             final_array = stack_four(arrays)
-        elif tiles_needed["W"]:
+        
+         # add 1 tile -> two total
+        if tiles_needed["N"] and not (tiles_needed["NE"] or tiles_needed["NW"]):
+            arrays = stage_arrays([filename_dict["N"], filename_dict["C"]])
+            final_array = vstack(arrays)
+        if tiles_needed["S"] and not (tiles_needed["SE"] or tiles_needed["SW"]):
+            arrays = stage_arrays([filename_dict["C"], filename_dict["S"]])
+            final_array = vstack(arrays)
+        if tiles_needed["E"] and not (tiles_needed["NE"] or tiles_needed["SE"]):
+            arrays = stage_arrays([filename_dict["C"], filename_dict["E"]])
+            final_array = hstack(arrays)
+        if tiles_needed["W"] and not (tiles_needed["NW"] or tiles_needed["SW"]):
             arrays = stage_arrays([filename_dict["W"], filename_dict["C"]])
             final_array = hstack(arrays)
 
@@ -248,8 +248,10 @@ class SunsetViewFinder(object):
             return arrays
 
         def stack_four(arrays):
-            return np.vstack(((np.hstack(arrays[0], arrays[1]), 
-                              (np.hstack(arrays[2], arrays[3])))
+            return (np.vstack((
+                                np.hstack((arrays[0], arrays[1])), 
+                                np.hstack((arrays[2], arrays[3]))
+                    )))
 
         def vertical_stack_two(arrays):
             return np.vstack((arrays[0], arrays[1]))
