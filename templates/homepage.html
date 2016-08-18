@@ -6,102 +6,124 @@
   <img src="http://localhost/logo.jpg" />
 </div> -->
 
-<!-- Nav bar -->
+<div id="full">
 
-<nav class="navbar navbar-default">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a href="#">
-        <img id="brand" alt="Brand" src="../static/logo.png">
-      </a>
-    </div>      
-      <form id="user-input-form">
-        <div class="navbar-right">
-          Find your sunset: <input type="text" name="user-location" id="user-textbox">
-          <!-- <div class="navbar-right radius-dropdown"> -->
-            <li class="btn-group">
-              <button data-toggle="dropdown" class="btn btn-default dropdown-toggle">Radius <b class="caret"></b></button>
-              <ul class="dropdown-menu">
-                <li><input type="radio" id="1" name="radius" value="1"><label for="1">1 mile </label></li>
-                <li><input type="radio" id="2" name="radius" value="2"><label for="2"> 2 miles </label></li>
-                <li><input type="radio" id="5" name="radius" value="5"><label for="5">5 miles </label></li>
-                <li><input type="radio" id="10" name="radius" value="10"><label for="10">10 miles </label></li>
-                <li><input type="radio" id="20" name="radius" value="20"><label for="20">20 miles </label></li>
-              </ul>
-            </li>
-          <!-- </div> -->
-          <!-- old static submit button -->
-          <!-- <input type="submit" value="Search" class="btn btn-info-outline" id="submit-location"> -->
-          <!-- hopefully a loading button -->
-          <button type="submit" id="submit-location"
-            class="btn btn-info-outline" data-loading-text="Loading..." autocomplete="off">
-            Search
-          </button>
-        </div>
-      </form>
-  </div>
-</nav>
+  <!-- Nav bar -->
 
-<!-- Modal content -->
-<div id="error-modal" class="modal">
-
-  <div class="modal-content">
-    <span class="close">×</span>
-    <img src="../static/notavailable.jpg" />
-  </div>
-
-</div>
-
-<!-- Google Map -->
-
-<div class="container" id="googleMap"></div>
-
-<!-- Carousel, old way of viewing pics -->
-
-<!-- <div class="container" id="pictures">
-  <div class="row">
-    <div class="col-md-12">
-      <div class="carousel slide multi-item-carousel" id="theCarousel">
-        <div class="row carousel-inner"> -->
-          <!-- place images from flickr here via javascript -->
-<!--         </div>
-        <a class="left carousel-control" href="#theCarousel" data-slide="prev"><i class="glyphicon glyphicon-chevron-left"></i></a>
-        <a class="right carousel-control" href="#theCarousel" data-slide="next"><i class="glyphicon glyphicon-chevron-right"></i></a>
-      </div>
-    </div>
-  </div>
-</div> -->
-
-<!-- Modal for pics -->
-<!-- <div class="container text-center"> -->
-
-<div class="modal fade" id="modal-pics" role="dialog">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-
-      <!-- Carousel -->
-      <div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
-  
-        <div class="carousel slide" id="theCarousel">
-        <!-- Wrapper for slides -->
-          <div class="carousel-inner">
-            <!-- place images here from flickr via javascript -->
-            <div class="item active"></div>
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a href="#">
+          <img id="brand" alt="Brand" src="../static/logo.png">
+        </a>
+      </div>      
+        <form id="user-input-form">
+          <div class="navbar-right">
+            Find your sunset: <input type="text" name="user-location" id="user-textbox">
+            <!-- <div class="navbar-right radius-dropdown"> -->
+              <li class="btn-group">
+                <button data-toggle="dropdown" class="btn btn-default dropdown-toggle">Radius <b class="caret"></b></button>
+                <ul class="dropdown-menu">
+                  <li><input type="radio" id="1" name="radius" value="1"><label for="1">1 mile </label></li>
+                  <li><input type="radio" id="2" name="radius" value="2"><label for="2"> 2 miles </label></li>
+                  <li><input type="radio" id="5" name="radius" value="5"><label for="5">5 miles </label></li>
+                  <li><input type="radio" id="10" name="radius" value="10"><label for="10">10 miles </label></li>
+                  <li><input type="radio" id="20" name="radius" value="20"><label for="20">20 miles </label></li>
+                </ul>
+              </li>
+            <!-- </div> -->
+            <!-- old static submit button -->
+            <!-- <input type="submit" value="Search" class="btn btn-info-outline" id="submit-location"> -->
+            <!-- hopefully a loading button -->
+            <button type="submit" id="submit-location"
+              class="btn btn-info-outline" data-loading-text="Loading..." autocomplete="off">
+              Search
+            </button>
           </div>
+        </form>
+    </div>
+  </nav>
+
+  <!-- Modal content -->
+  <div id="error-modal" class="modal">
+
+    <div class="modal-content">
+      <span class="close">×</span>
+      <img src="../static/notavailable.jpg" />
+    </div>
+
+  </div>
+
+  <!-- Google Map -->
+
+  <div class="container" id="googleMap"></div>
+  
+
+  <!-- Modal for pics -->
+  <div class="modal fade" id="modal-pics" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <!-- Carousel -->
+        <div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+    
+          <div class="carousel slide" id="theCarousel">
+          <!-- Wrapper for slides -->
+            <div class="carousel-inner">
+              <!-- place images here from flickr via javascript -->
+              <div class="item active"></div>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
+            <span class="glyphicon glyphicon-chevron-left"></span>
+          </a>
+          <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
+            <span class="glyphicon glyphicon-chevron-right"></span>
+          </a>
         </div>
 
-        <!-- Controls -->
-        <a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
-          <span class="glyphicon glyphicon-chevron-left"></span>
-        </a>
-        <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
-          <span class="glyphicon glyphicon-chevron-right"></span>
-        </a>
       </div>
-
     </div>
   </div>
+
+  <!-- Modal for no pics-->
+  <div class="modal fade" id="no-pics" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Oh no!</h4>
+        </div>
+        <div class="modal-body">
+          <p>There are no pictures at this location</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div class="footer">
+     <div class="container">
+        <img id="sun-pin" src="../static/favicon.ico">
+        <a href="https://github.com/sajafleming/Sunset-Funset" target="_blank" >see code here</a>
+      </p>
+
+      <!-- <p class="quote">look west and hope for the best</p> -->
+      
+      <a href="https://www.linkedin.com/in/sajafleming" class="navbar-btn btn-danger btn pull-right" target="_blank">
+      <span class="glyphicon glyphicon-star about_button"></span>ABOUT ME </a>
+    </div>
+
+  </div>
+
 </div>
-<!-- </div> -->
 
 {% endblock %}

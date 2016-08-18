@@ -136,7 +136,7 @@ def find_points():
             image_urls = data_to_urls(data)
             # for now just add the first url to the final urls list
             # maybe later I will have a better way of picking popular pictures
-
+            
             # construct data dictionary
             final_data.append({"lat": latlong[0], "lng": latlong[1], "urls": image_urls})
 
@@ -159,4 +159,4 @@ if __name__ == "__main__":
     # DebugToolbarExtension(app)
     connect_to_db(app)
 
-    app.run(host="0.0.0.0", port=80)
+    app.run(host="0.0.0.0", port=8080)

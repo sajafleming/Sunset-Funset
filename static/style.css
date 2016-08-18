@@ -1,18 +1,40 @@
-body {
+/*body {
     background-color: #f5f5f5;
     height: 100%;
-    /*padding-top: 20px;*/
-}
+    padding-top: 20px;
+}*/
 
-html {
+/*html {
   height: 100%;
   min-height: 100% !important;
+}*/
+
+html, body, #full {
+  height: 100%
+}
+
+#full {
+  display: flex;
+  flex-direction: column;
+}
+
+/*footer*/
+.footer {
+  height: 60px;
+  /*vertical-align: center;*/
+  background-color: #f5f5f5
+  vertical-align: auto;
+}
+
+#sun-pin {
+  height: 30px;
+  width: 30px
 }
 
 .container {
   margin: 0 auto;
   padding: 10px;
-  padding-top: 30px;
+  /*padding-top: 30px;*/
 }
 
 #user-textbox {
@@ -129,8 +151,8 @@ form {
 }
 
 /* Magic for centering carousel images */
-.carousel-inner > .item > img {
-    margin: 0 auto;
+img {
+    margin: 0 auto!important;
 }
 
 /* The Close Button */
@@ -172,6 +194,21 @@ form {
 
 #googleMap {
   width: 100%;
-  height: 600px;
-  display: inline-flex;
+  height: 100%;
+  /*display: inline-flex;*/
+  padding-top: 20px;
+  flex-grow: 1;
+}
+
+.about_button {
+  float: right;
+  margin-bottom: 10px;
+}
+
+.navbar-btn {
+  margin-top: -40px;
+}
+
+.glyphicon glyphicon-star {
+  float: left;
 }
