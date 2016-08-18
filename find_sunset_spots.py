@@ -8,7 +8,7 @@ import time
 import boto3
 import botocore
 # from osgeo import gdal
-from math import ceil
+from math import ceil, floor
 from scipy.ndimage.filters import generic_filter as gf
 from flask_sqlalchemy import SQLAlchemy
 from operator import itemgetter
@@ -29,6 +29,7 @@ DEGREES_PER_INDEX = 0.0002777777777685509
 OVERLAPPING_INDICES = 12
 # Each index represents approximately .0186411357696567 miles
 MILES_PER_INDEX = 0.0186411357696567
+TOTAL_MILES_OF_TILE = 67.3317824
 
 app = Flask(__name__)
 app.client = boto3.client(
@@ -175,25 +176,64 @@ class SunsetViewFinder(object):
         reconcile this, slice the OVERLAPPING_INDICES off the south and east 
         bounds.
 
-        Will return an array with dimensions of 10,800 * 10,800
+        Will return an array with the necesary tiles added, see _get_tiles_needed
         """
 
         # Create filename dict where the keys correspond to the location that 
         # the file will be in the elevation array
         filename_dict = self._generate_surrounding_filenames()
 
+        # Create dict with T/F values on if the tile is needed
+        tiles_needed = self._get_tiles_needed()
+
         # Initiaize a new dictionary that will have the same keys as the 
         # filenams_dict but with the filename read as an arrays as the value
         data_dict = {}
 
-        def get_row(filenames):
+        # eight possibilities 
+        # if a corner is needed, add 3 tiles -> total will be 4 tiles
+        # call stack arrays function with top left, top right, bottom left, 
+        # bottom right
+        if tiles_needed["NW"]:
+            arrays = stage_arrays([filename_dict["NW"], filename_dict["N"], 
+                                   filename_dict["W"], filename_dict["C"]])
+            final_array = stack_four(arrays)
+        # add 1 tile -> two total
+        elif tiles_needed["N"]:
+            arrays = stage_arrays([filename_dict["N"], filename_dict["C"]])
+            final_array = vstack(arrays)
+
+        if tiles_needed["NE"]:
+            arrays = stage_arrays([filename_dict["N"], filename_dict["NE"], 
+                                  filename_dict["C"], filename_dict["E"]])
+            final_array = stack_four(arrays)
+        elif tiles_needed["S"]:
+            arrays = stage_arrays([filename_dict["C"], filename_dict["S"]])
+            final_array = vstack(arrays)
+
+        if tiles_needed["SW"]:
+            arrays = stage_arrays([filename_dict["W"], filename_dict["C"], 
+                                  filename_dict["SW"], filename_dict["S"]])
+            final_array = stack_four(arrays)
+        elif tiles_needed["E"]:
+            arrays = stage_arrays([filename_dict["C"], filename_dict["E"]])
+            final_array = hstack(arrays)
+
+        if tiles_needed["SE"]:
+            arrays = stage_arrays([filename_dict["C"], filename_dict["E"], 
+                                  filename_dict["S"], filename_dict["SE"]])
+            final_array = stack_four(arrays)
+        elif tiles_needed["W"]:
+            arrays = stage_arrays([filename_dict["W"], filename_dict["C"]])
+            final_array = hstack(arrays)
+
+        def stage_arrays(filenames):
             arrays = []
             for filename in filenames:
                 try:
                     response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
                     array = np.load(BytesIO(response['Body'].read())).astype(np.float16, copy=False)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
-                    # print "ARRAY: {}".format(array)
-                    # data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
+                    print "ARRAY: {}".format(array)
                 except botocore.exceptions.ClientError as e:
                     if e.response['Error']['Code'] == "404":
                         exists = False
@@ -202,41 +242,80 @@ class SunsetViewFinder(object):
                         print e
                         print filename
                         # raise e
-                        # print "created look_alike with zeros"
+                        print "created look_alike with zeros"
                         array = np.zeros((3600, 3600), dtype=np.float16)
                 arrays.append(array)
-            return np.hstack(arrays)
+            return arrays
 
-        return np.vstack((get_row([filename_dict["NW"], filename_dict["N"], filename_dict["NE"]]),
-                          get_row([filename_dict["W"], filename_dict["C"], filename_dict["E"]]),
-                          get_row([filename_dict["SW"], filename_dict["S"], filename_dict["SE"]])))
+        def stack_four(arrays):
+            return np.vstack(((np.hstack(arrays[0], arrays[1]), 
+                              (np.hstack(arrays[2], arrays[3])))
 
+        def vertical_stack_two(arrays):
+            return np.vstack((arrays[0], arrays[1]))
 
-        # for file_key, filename in filename_dict.iteritems():
+        def horizontal_stack_two(arrays):
+            return np.hstack((arrays[0], arrays[1]))
 
-        #     try:
-        #         response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
-        #         array = np.load(BytesIO(response['Body'].read())).astype(np.float32, copy=False)
-        #         # print "ARRAY: {}".format(array)
-        #         data_dict[file_key] = array[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
-        #     except botocore.exceptions.ClientError as e:
-        #         if e.response['Error']['Code'] == "404":
-        #             exists = False
-        #             print "got here"
-        #         else:
-        #             print e
-        #             print filename
-        #             # raise e
-        #             # print "created look_alike with zeros"
-        #             data_dict[file_key] = np.zeros((3600, 3600))
- 
-        # # Use scipy stacking to vertically concatenate 3 rows that are each 
-        # # horizontally concatenated over 3 columns
-        # return (scipy.vstack((
-        #        scipy.hstack((data_dict["NW"], data_dict["N"], data_dict["NE"])),
-        #        scipy.hstack((data_dict["W"], data_dict["C"], data_dict["E"])),
-        #        scipy.hstack((data_dict["SW"], data_dict["S"], data_dict["SE"]))
-        #        )))
+        return final_array
+
+        # return np.vstack((get_row([filename_dict["NW"], filename_dict["N"], filename_dict["NE"]]),
+        #                   get_row([filename_dict["W"], filename_dict["C"], filename_dict["E"]]),
+        #                   get_row([filename_dict["SW"], filename_dict["S"], filename_dict["SE"]])))
+
+    def _get_tiles_needed(self):
+        """This functions tests where the original latlong is positioned in the
+        center file in order to decide which surrounding arrays to pull into 
+        memory. This save memory and also cut down time reading data from AWS.
+        Return which files need to be including in radius array."""
+
+        # fraction of tile needed for user's radius
+        space_needed = self._search_radius / TOTAL_MILES_OF_TILE
+
+        # decimal of latlong
+        horizontal_location = self._latlong[0] - floor(self._latlong[0])
+        vertical_location = self._latlong[1] - floor(self._latlong[1])
+
+        tiles_needed = { "NW": False,
+                        "N": False,
+                        "NE": False,
+                        "W": False,
+                        "C": True,
+                        "E": False,
+                        "SW": False,
+                        "S": False,
+                        "SE": False }
+
+        # make values true if the tile will need to be added to radius array
+        # tile needed on left - west
+        if space_needed > horizontal_location:
+            tiles_needed["W"] = True
+        # tile needed on right - east
+        if space_needed > 1 - horizontal_location:
+            tiles_needed["E"] = True
+        # tile needed on top - north
+        if space_needed > vertical_location:
+            tiles_needed["N"] = True
+        # tile needed on bottom - south
+        if space_needed > 1 - vertical_location:
+            tiles_needed["S"] = True
+
+        # corner tiles
+        # northwest tile needed if both north and west needed
+        if tiles_needed["N"] == True and tiles_needed["W"] == True:
+            tiles_needed["NW"] == True
+        # northeast tile needed if both north and east needed
+        if tiles_needed["N"] == True and tiles_needed["E"] == True:
+            tiles_needed["NE"] == True
+        # southwest tile needed if both south and west needed
+        if tiles_needed["S"] == True and tiles_needed["W"] == True:
+            tiles_needed["SW"] == True
+        # southeast tile needed if both south and east needed
+        if tiles_needed["S"] == True and tiles_needed["E"] == True:
+            tiles_needed["SE"] == True
+
+        return tiles_needed
+
 
     def _new_argrelmax(self, order=BOUNDING_BOX, mode="clip"):
         """Find local maximums over a certain area (the order).
