@@ -182,7 +182,7 @@ class SunsetViewFinder(object):
         # Create filename dict where the keys correspond to the location that 
         # the file will be in the elevation array
         filename_dict = self._generate_surrounding_filenames()
-
+        print filename_dict["C"]
         # Create dict with T/F values on if the tile is needed
         tiles_needed = self._get_tiles_needed()
 
@@ -190,46 +190,54 @@ class SunsetViewFinder(object):
         # filenams_dict but with the filename read as an arrays as the value
         data_dict = {}
 
+        # best case scenario, all are false meaning the center tile is the only
+        # that is needed
+        if not (tiles_needed["N"] or tiles_needed["S"] or tiles_needed["E"] or tiles_needed["W"]):
+            print "ONLY ONE TILE NEEDED WOOO"
+            response = app.client.get_object(Bucket='sunsetfunset', Key=filename_dict["C"])
+            return np.load(BytesIO(response['Body'].read())).astype(np.float16, copy=False)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
+
         # eight possibilities 
         # if a corner is needed, add 3 tiles -> total will be 4 tiles
         # call stack arrays function with top left, top right, bottom left, 
         # bottom right
-
-        # NO THIS IS SO WRONG
-        if tiles_needed["NW"]:
+        if tiles_needed["N"] and tiles_needed["W"]:
             arrays = stage_arrays([filename_dict["NW"], filename_dict["N"], 
                                    filename_dict["W"], filename_dict["C"]])
             final_array = stack_four(arrays)
-        if tiles_needed["NE"]:
+        elif tiles_needed["N"] and tiles_needed["E"]:
             arrays = stage_arrays([filename_dict["N"], filename_dict["NE"], 
                                   filename_dict["C"], filename_dict["E"]])
             final_array = stack_four(arrays)
-        if tiles_needed["SW"]:
+        elif tiles_needed["S"] and tiles_needed["W"]:
             arrays = stage_arrays([filename_dict["W"], filename_dict["C"], 
                                   filename_dict["SW"], filename_dict["S"]])
             final_array = stack_four(arrays)
-        if tiles_needed["SE"]:
+        elif tiles_needed["S"] and tiles_needed["E"]:
             arrays = stage_arrays([filename_dict["C"], filename_dict["E"], 
                                   filename_dict["S"], filename_dict["SE"]])
             final_array = stack_four(arrays)
-        
+
          # add 1 tile -> two total
-        if tiles_needed["N"] and not (tiles_needed["NE"] or tiles_needed["NW"]):
+        elif tiles_needed["N"]:
             arrays = stage_arrays([filename_dict["N"], filename_dict["C"]])
             final_array = vstack(arrays)
-        if tiles_needed["S"] and not (tiles_needed["SE"] or tiles_needed["SW"]):
+        elif tiles_needed["S"]:
             arrays = stage_arrays([filename_dict["C"], filename_dict["S"]])
             final_array = vstack(arrays)
-        if tiles_needed["E"] and not (tiles_needed["NE"] or tiles_needed["SE"]):
+        elif tiles_needed["E"]:
             arrays = stage_arrays([filename_dict["C"], filename_dict["E"]])
             final_array = hstack(arrays)
-        if tiles_needed["W"] and not (tiles_needed["NW"] or tiles_needed["SW"]):
+        elif tiles_needed["W"]:
             arrays = stage_arrays([filename_dict["W"], filename_dict["C"]])
             final_array = hstack(arrays)
 
         def stage_arrays(filenames):
+            """See if array is in S3 bucket, if it is, then it is ready to go, 
+            if not, create a look alike array of zeros"""
             arrays = []
             for filename in filenames:
+                print filename
                 try:
                     response = app.client.get_object(Bucket='sunsetfunset', Key=filename)
                     array = np.load(BytesIO(response['Body'].read())).astype(np.float16, copy=False)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
@@ -272,21 +280,16 @@ class SunsetViewFinder(object):
         Return which files need to be including in radius array."""
 
         # fraction of tile needed for user's radius
-        space_needed = self._search_radius / TOTAL_MILES_OF_TILE
+        space_needed = float(self._search_radius) / TOTAL_MILES_OF_TILE
 
         # decimal of latlong
         horizontal_location = self._latlong[0] - floor(self._latlong[0])
         vertical_location = self._latlong[1] - floor(self._latlong[1])
 
-        tiles_needed = { "NW": False,
-                        "N": False,
-                        "NE": False,
-                        "W": False,
-                        "C": True,
-                        "E": False,
-                        "SW": False,
-                        "S": False,
-                        "SE": False }
+        tiles_needed = { "N": False,
+                         "S": False,
+                         "E": False,
+                         "W": False }
 
         # make values true if the tile will need to be added to radius array
         # tile needed on left - west
@@ -302,19 +305,7 @@ class SunsetViewFinder(object):
         if space_needed > 1 - vertical_location:
             tiles_needed["S"] = True
 
-        # corner tiles
-        # northwest tile needed if both north and west needed
-        if tiles_needed["N"] == True and tiles_needed["W"] == True:
-            tiles_needed["NW"] == True
-        # northeast tile needed if both north and east needed
-        if tiles_needed["N"] == True and tiles_needed["E"] == True:
-            tiles_needed["NE"] == True
-        # southwest tile needed if both south and west needed
-        if tiles_needed["S"] == True and tiles_needed["W"] == True:
-            tiles_needed["SW"] == True
-        # southeast tile needed if both south and east needed
-        if tiles_needed["S"] == True and tiles_needed["E"] == True:
-            tiles_needed["SE"] == True
+        print tiles_needed
 
         return tiles_needed
 
