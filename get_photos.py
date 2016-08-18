@@ -8,7 +8,7 @@ URL_BASE = "https://api.flickr.com/services/rest/?"
 URL_PARAMS = ("method=flickr.photos.search&api_key={}&text={}&lat={}&lon={}"
               "&radius={}&radius_units=mi&format=json&nojsoncallback=1")
 PHOTO_URL_TEMPLATE = "https://farm{}.staticflickr.com/{}/{}_{}.jpg"
-PHOTO_SOURCE_URL = "https://www.flickr.com/photos/{}/{}/" # id then owner
+PHOTO_SOURCE_URL = "https://www.flickr.com/photos/{}/{}/" # user-id then photo-id
 
 
 def request_flickr_data(lat, lon, radius, text="sunset", api_key=None, auth_token=None):
@@ -25,11 +25,6 @@ def request_flickr_data(lat, lon, radius, text="sunset", api_key=None, auth_toke
     response = urllib2.urlopen(url_request)
     data = response.read()
 
-    # If data returns no results, recurse with double the raidus until up to 1 mile
-    # if len(data) < 1 or radius > 1:
-    #     radius = radius * 2
-    #     request_flickr_data(lat, lon, radius, text="sunset", api_key=None, auth_token=None)
-
     return json.loads(data)
 
 
@@ -43,15 +38,15 @@ def data_to_urls(data):
         farm_id = data['photos']['photo'][photo_info]['farm']
         server_id = data['photos']['photo'][photo_info]['server']
         photo_id = data['photos']['photo'][photo_info]['id']
+        user_id = data['photos']['photo'][photo_info]['owner']
         photo_secret = data['photos']['photo'][photo_info]['secret']
 
-        # image url 
-        image_urls.append(PHOTO_URL_TEMPLATE.format(farm_id, server_id, photo_id, photo_secret))
+        # image url, image source
+        image_urls.append([PHOTO_URL_TEMPLATE.format(farm_id, server_id, photo_id, photo_secret), 
+                           PHOTO_SOURCE_URL.format(user_id, photo_id)])
 
-        # image source page TODO
-        # image_urls.append(PHOTO_SOURCE_URL.format(photo_id))
 
-    return (image_urls) 
+    return image_urls
 
 
 def build_api_sig(url_params_str, secret=None):

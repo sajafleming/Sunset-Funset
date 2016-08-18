@@ -174,7 +174,7 @@ $(document).ready(function () {
       this.setIcon("http://i66.tinypic.com/17wjro.png");
       // show carousel arrows
       // $('.multi-item-carousel').show()
-      $("#modal-pics").modal()
+      // $("#modal-pics").modal()
     });
 
     return marker;
@@ -187,27 +187,37 @@ $(document).ready(function () {
     // add pictures for pin selected
     var picturesLength = urls.length;
 
-    if (picturesLength === 0) {
-      //$('error-div').html("NO PICSSSS")
-      //alert("No pictures available for this area")
-    }
+    if (urls.length === 0) {
+      $("#no-pics").modal()
+    } else { 
 
-    for (var i = 0; i < picturesLength; i++) {
-      console.log(urls[i])
+      $("#modal-pics").modal()
 
-      var pic = urls[i]
-      var html = '<div class="item';
+      // urls = [photo_url, photo_source_url]
+      console.log(urls);
+      for (var i = 0; i < picturesLength; i++) {
+        console.log(urls[i])
 
-      if (i === 0) {
-        html += ' active';
+        var pic = urls[i][0]
+        var link = urls[i][1]
+        var html = '<div class="item';
+
+        console.log(pic);
+
+        console.log(link);
+
+        if (i === 0) {
+          html += ' active';
+        }
+
+        html += '"><a href="';
+        html += link + '" target="_blank"><img class="img-responsive" src="';
+        html += pic + '" class="my-img"></img></a></div>';
+        $('.carousel-inner').append(html);
       }
-
-      html += '"><img class="img-responsive" src="';
-      html += pic + '" class="my-img"></img></div>';
-      $('.carousel-inner').append(html);
     }
 
-    // bootstrap carousel - don't move on own
+    // bootstrap carousel - supposed to not move on it's own, but it is
     $('.carousel').carousel({
       interval: false
     })
@@ -215,53 +225,7 @@ $(document).ready(function () {
   }
 
 
-  // old bootstrap carousel
-  // function showPictures(latlong, urls) {
-  //   $('.carousel-inner').empty();
 
-  //   // add pictures for pin selected
-  //   var picturesLength = urls.length;
 
-  //   if (picturesLength === 0) {
-  //     //$('error-div').html("NO PICSSSS")
-  //     //alert("No pictures available for this area")
-  //   }
-
-  //   for (var i = 0; i < picturesLength; i++) {
-  //     console.log(urls[i])
-
-  //     var pic = urls[i]
-  //     var html = '<div class="item';
-
-  //     if (i === 0) {
-  //       html += ' active';
-  //     }
-
-  //     html += '"><div class="col-xs-4"><a href="#"><img src="';
-  //     html += pic + '" class="my-img"></a></div></div>';
-  //     $('.carousel-inner').append(html);
-  //   }
-
-  //   // bootstrap carousel
-  //   $('.multi-item-carousel').carousel({
-  //     interval: false
-  //   })
-
-  //   $('.multi-item-carousel .item').each(function(){
-  //     var next = $(this).next();
-
-  //     if (!next.length) {
-  //       next = $(this).siblings(':first');
-  //     }
-  //     next.children(':first-child').clone().appendTo($(this));
-      
-  //     if (next.next().length>0) {
-  //       next.next().children(':first-child').clone().appendTo($(this));
-  //     }
-  //     else {
-  //       $(this).siblings(':first').children(':first-child').clone().appendTo($(this));
-  //     }
-  //   });
-  // }
 
 });
