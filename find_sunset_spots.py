@@ -41,13 +41,15 @@ app.client = boto3.client(
 class SunsetViewFinder(object):
     """Find the best sunset viewing spots"""
 
-    def __init__(self, latlong, elevation_array_n_bound, 
-                 elevation_array_w_bound, radius, number_of_points_returned=25):
+    def __init__(self, latlong, start_n_bound, 
+                 start_w_bound, radius, number_of_points_returned=25):
         self._latlong = latlong
-        self._nbound = elevation_array_n_bound
-        self._wbound = elevation_array_w_bound
+        self._start_nbound = start_n_bound
+        self._start_wbound = start_w_bound
         self._search_radius = radius
         self._number_of_points_returned = number_of_points_returned
+        self._nbound = None
+        self._wbound = None
         self._elevation_array = None 
         self._cropped_elevation_array = None
         self._cropped_array_top_left_indices = None
@@ -179,59 +181,6 @@ class SunsetViewFinder(object):
         Will return an array with the necesary tiles added, see _get_tiles_needed
         """
 
-        # Create filename dict where the keys correspond to the location that 
-        # the file will be in the elevation array
-        filename_dict = self._generate_surrounding_filenames()
-        print filename_dict["C"]
-        # Create dict with T/F values on if the tile is needed
-        tiles_needed = self._get_tiles_needed()
-
-        # Initiaize a new dictionary that will have the same keys as the 
-        # filenams_dict but with the filename read as an arrays as the value
-        data_dict = {}
-
-        # best case scenario, all are false meaning the center tile is the only
-        # that is needed
-        if not (tiles_needed["N"] or tiles_needed["S"] or tiles_needed["E"] or tiles_needed["W"]):
-            print "ONLY ONE TILE NEEDED WOOO"
-            response = app.client.get_object(Bucket='sunsetfunset', Key=filename_dict["C"])
-            return np.load(BytesIO(response['Body'].read())).astype(np.float16, copy=False)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
-
-        # eight possibilities 
-        # if a corner is needed, add 3 tiles -> total will be 4 tiles
-        # call stack arrays function with top left, top right, bottom left, 
-        # bottom right
-        if tiles_needed["N"] and tiles_needed["W"]:
-            arrays = stage_arrays([filename_dict["NW"], filename_dict["N"], 
-                                   filename_dict["W"], filename_dict["C"]])
-            final_array = stack_four(arrays)
-        elif tiles_needed["N"] and tiles_needed["E"]:
-            arrays = stage_arrays([filename_dict["N"], filename_dict["NE"], 
-                                  filename_dict["C"], filename_dict["E"]])
-            final_array = stack_four(arrays)
-        elif tiles_needed["S"] and tiles_needed["W"]:
-            arrays = stage_arrays([filename_dict["W"], filename_dict["C"], 
-                                  filename_dict["SW"], filename_dict["S"]])
-            final_array = stack_four(arrays)
-        elif tiles_needed["S"] and tiles_needed["E"]:
-            arrays = stage_arrays([filename_dict["C"], filename_dict["E"], 
-                                  filename_dict["S"], filename_dict["SE"]])
-            final_array = stack_four(arrays)
-
-         # add 1 tile -> two total
-        elif tiles_needed["N"]:
-            arrays = stage_arrays([filename_dict["N"], filename_dict["C"]])
-            final_array = vstack(arrays)
-        elif tiles_needed["S"]:
-            arrays = stage_arrays([filename_dict["C"], filename_dict["S"]])
-            final_array = vstack(arrays)
-        elif tiles_needed["E"]:
-            arrays = stage_arrays([filename_dict["C"], filename_dict["E"]])
-            final_array = hstack(arrays)
-        elif tiles_needed["W"]:
-            arrays = stage_arrays([filename_dict["W"], filename_dict["C"]])
-            final_array = hstack(arrays)
-
         def stage_arrays(filenames):
             """See if array is in S3 bucket, if it is, then it is ready to go, 
             if not, create a look alike array of zeros"""
@@ -266,6 +215,86 @@ class SunsetViewFinder(object):
 
         def horizontal_stack_two(arrays):
             return np.hstack((arrays[0], arrays[1]))
+
+        # Create filename dict where the keys correspond to the location that 
+        # the file will be in the elevation array
+        filename_dict = self._generate_surrounding_filenames()
+        print filename_dict["C"]
+        # Create dict with T/F values on if the tile is needed
+        tiles_needed = self._get_tiles_needed()
+
+
+        # Initiaize a new dictionary that will have the same keys as the 
+        # filenams_dict but with the filename read as an arrays as the value
+        data_dict = {}
+
+        # best case scenario, all are false meaning the center tile is the only
+        # that is needed
+        if not (tiles_needed["N"] or tiles_needed["S"] or tiles_needed["E"] or tiles_needed["W"]):
+            print "ONLY ONE TILE NEEDED WOOO"
+            # response = app.client.get_object(Bucket='sunsetfunset', Key=filename_dict["C"])
+            # result = np.load(BytesIO(response['Body'].read())).astype(np.float16, copy=False)[:-OVERLAPPING_INDICES,:-OVERLAPPING_INDICES]
+
+            # the nw bounds of the data pulled in to memory will be the same 
+            # as the nw of the original tile
+            self._nbound = self._start_nbound
+            self._wbound = self._start_wbound
+            # this is wrong
+            print stage_arrays([filename_dict["C"]])
+            return stage_arrays([filename_dict["C"]])
+
+        # eight possibilities 
+        # if a corner is needed, add 3 tiles -> total will be 4 tiles
+        # call stack arrays function with top left, top right, bottom left, 
+        # bottom right
+        # assing the NW coordinate of data that is pulled into memory
+        if tiles_needed["N"] and tiles_needed["W"]:
+            arrays = stage_arrays([filename_dict["NW"], filename_dict["N"], 
+                                   filename_dict["W"], filename_dict["C"]])
+            final_array = stack_four(arrays)
+            self._nbound = self._start_nbound + 1
+            self._wbound = self._start_wbound + 1
+        elif tiles_needed["N"] and tiles_needed["E"]:
+            arrays = stage_arrays([filename_dict["N"], filename_dict["NE"], 
+                                  filename_dict["C"], filename_dict["E"]])
+            final_array = stack_four(arrays) 
+            self._nbound = self._start_nbound + 1
+            self._wbound = self._start_wbound
+        elif tiles_needed["S"] and tiles_needed["W"]:
+            arrays = stage_arrays([filename_dict["W"], filename_dict["C"], 
+                                  filename_dict["SW"], filename_dict["S"]])
+            final_array = stack_four(arrays)
+            self._nbound = self._start_nbound
+            self._wbound = self._start_wbound + 1
+        elif tiles_needed["S"] and tiles_needed["E"]:
+            arrays = stage_arrays([filename_dict["C"], filename_dict["E"], 
+                                  filename_dict["S"], filename_dict["SE"]])
+            final_array = stack_four(arrays)
+            self._nbound = self._start_nbound
+            self._wbound = self._start_wbound
+
+         # add 1 tile -> two total
+        elif tiles_needed["N"]:
+            arrays = stage_arrays([filename_dict["N"], filename_dict["C"]])
+            final_array = vstack(arrays)
+            self._nbound = self._start_nbound + 1
+            self._wbound = self._start_wbound
+        elif tiles_needed["S"]:
+            arrays = stage_arrays([filename_dict["C"], filename_dict["S"]])
+            final_array = vstack(arrays)
+            self._nbound = self._start_nbound
+            self._wbound = self._start_wbound
+        elif tiles_needed["E"]:
+            arrays = stage_arrays([filename_dict["C"], filename_dict["E"]])
+            final_array = hstack(arrays)
+            self._nbound = self._start_nbound
+            self._wbound = self._start_wbound
+        elif tiles_needed["W"]:
+            arrays = stage_arrays([filename_dict["W"], filename_dict["C"]])
+            final_array = hstack(arrays)
+            self._nbound = self._start_nbound 
+            self._wbound = self._start_wbound + 1
+
 
         return final_array
 
@@ -599,7 +628,6 @@ class SunsetViewFinder(object):
         # n = len(elevation_array)
 
         # Creating the box around the radius by setting a beginning and ending 
-        # point
         y_begin = max(y_index - self._radius_in_indices, 0)
         y_end = y_index + self._radius_in_indices + 1
         x_begin = max(x_index - self._radius_in_indices, 0)
@@ -664,11 +692,12 @@ class SunsetViewFinder(object):
     def _find_coordinates(self):
         """Find index for elevation array of a given latlong.
 
-        The indices will be calculated with the exact N and W bounds from the 
-        database. DEGREES_PER_INDEX is calculated by taking the difference of NS
+        DEGREES_PER_INDEX is calculated by taking the difference of NS
         (or EW) bounds and dividing 3612 (the length and width of a single 
         file). DEGREES_PER_INDEX is calculated to be 0.0002777777777685509.
         """
+
+        # currently in terms of master array, TODO change to whichever size
 
         lat = self._latlong[0]
         lng = self._latlong[1]
@@ -686,7 +715,7 @@ class SunsetViewFinder(object):
 
         Each index represents approximately .0186411357696567 miles
         """
-        # TODO: move to constant
+
         return int(float(user_radius_miles) / MILES_PER_INDEX)
 
     @staticmethod

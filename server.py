@@ -89,40 +89,16 @@ def find_points():
     # if file in the bucket
     if exists:
 
-        print "file name exists in bucket"
+        print "starting tile exists in bucket"
 
-        top_left_filename = create_filename(n + 1, w + 1) # want to add 1 to w here because filename represented as positive
-        print "#############################################"
-
-        print top_left_filename
-
-        top_left_db_filename = top_left_filename.split(".")[0]
-        print top_left_db_filename
-
-        # using database:
-        # query db for exact coordinates of NW corner of master array
-        # exact_coordinates = LatLong.query.filter_by(filename=top_left_db_filename).first()
-        # exact_N_bound = exact_coordinates.n_bound
-        # exact_W_bound = exact_coordinates.w_bound
-
-        top_left_filepath = create_filepath(top_left_filename)
-
-        if os.path.isfile(top_left_filename):
-            # if the top left file exists
-            exact_N_bound = n + 1 + .00166666666
-            exact_W_bound = - (w + 1 + .0016666667)
-
-        else:
-            # if the top left file does not exist use what would be the topleft 
-            # coordinates
-            exact_N_bound = n + 1+ .00166666666
-            exact_W_bound = - (w + 1 + .0016666667)
-            
+        exact_N_bound = n + 1+ .00166666666
+        exact_W_bound = - (w + 1 + .0016666667)    
 
         # call into utilities functions to get list of lat and longs for best sunset spots
         # sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound, radius)
 
         # use SunsetViewFinder class to instantiate a new object
+        # exact n and w bounds are now the bounds of the center tile
         potential_sunset_spots = SunsetViewFinder(latlong, exact_N_bound, exact_W_bound, radius)
         sunset_spots = potential_sunset_spots.pick_best_points()
 
@@ -136,7 +112,7 @@ def find_points():
             image_urls = data_to_urls(data)
             # for now just add the first url to the final urls list
             # maybe later I will have a better way of picking popular pictures
-            
+
             # construct data dictionary
             final_data.append({"lat": latlong[0], "lng": latlong[1], "urls": image_urls})
 
