@@ -85,6 +85,7 @@ class SunsetViewFinder(object):
         # Crop the elevation array according to the search radius
         (self._cropped_elevation_array, self._cropped_array_top_left_indices, 
             self._user_latlong_coordinates) = self._crop_elevation_array()
+        print self._cropped_elevation_array
 
         # Begin filter process:
         # 1. filter out any point that is not a local maxima over a certain area
@@ -204,17 +205,6 @@ class SunsetViewFinder(object):
                 arrays.append(array)
             return arrays
 
-        def stack_four(arrays):
-            return (np.vstack((
-                                np.hstack((arrays[0], arrays[1])), 
-                                np.hstack((arrays[2], arrays[3]))
-                    )))
-
-        def vertical_stack_two(arrays):
-            return np.vstack((arrays[0], arrays[1]))
-
-        def horizontal_stack_two(arrays):
-            return np.hstack((arrays[0], arrays[1]))
 
         # Create filename dict where the keys correspond to the location that 
         # the file will be in the elevation array
@@ -240,67 +230,80 @@ class SunsetViewFinder(object):
             self._nbound = self._start_nbound
             self._wbound = self._start_wbound
             # this is wrong
-            print stage_arrays([filename_dict["C"]])
-            return stage_arrays([filename_dict["C"]])
+            array = stage_arrays([filename_dict["C"]])[0]
+            print array
+            return array
 
-        # eight possibilities 
+        def stack_four(arrays):
+            return (np.vstack((
+                                np.hstack((arrays[0], arrays[1])), 
+                                np.hstack((arrays[2], arrays[3]))
+                    )))
+
+        # eight other possibilities 
         # if a corner is needed, add 3 tiles -> total will be 4 tiles
-        # call stack arrays function with top left, top right, bottom left, 
+        # call stage arrays function with top left, top right, bottom left, 
         # bottom right
-        # assing the NW coordinate of data that is pulled into memory
+        # assign the NW coordinate of data that is pulled into memory
         if tiles_needed["N"] and tiles_needed["W"]:
             arrays = stage_arrays([filename_dict["NW"], filename_dict["N"], 
                                    filename_dict["W"], filename_dict["C"]])
             final_array = stack_four(arrays)
             self._nbound = self._start_nbound + 1
             self._wbound = self._start_wbound + 1
+            print "4 tiles needed - NW"
         elif tiles_needed["N"] and tiles_needed["E"]:
             arrays = stage_arrays([filename_dict["N"], filename_dict["NE"], 
                                   filename_dict["C"], filename_dict["E"]])
             final_array = stack_four(arrays) 
             self._nbound = self._start_nbound + 1
             self._wbound = self._start_wbound
+            print "4 tiles needed - NE"
         elif tiles_needed["S"] and tiles_needed["W"]:
             arrays = stage_arrays([filename_dict["W"], filename_dict["C"], 
                                   filename_dict["SW"], filename_dict["S"]])
             final_array = stack_four(arrays)
             self._nbound = self._start_nbound
             self._wbound = self._start_wbound + 1
+            print "4 tiles needed - SW"
         elif tiles_needed["S"] and tiles_needed["E"]:
             arrays = stage_arrays([filename_dict["C"], filename_dict["E"], 
                                   filename_dict["S"], filename_dict["SE"]])
             final_array = stack_four(arrays)
             self._nbound = self._start_nbound
             self._wbound = self._start_wbound
+            print "4 tiles needed - SE"
 
          # add 1 tile -> two total
         elif tiles_needed["N"]:
             arrays = stage_arrays([filename_dict["N"], filename_dict["C"]])
-            final_array = vstack(arrays)
+            final_array = np.vstack((arrays[0], arrays[1]))
             self._nbound = self._start_nbound + 1
             self._wbound = self._start_wbound
+            print "2 tiles needed - N"
         elif tiles_needed["S"]:
             arrays = stage_arrays([filename_dict["C"], filename_dict["S"]])
-            final_array = vstack(arrays)
+            final_array = np.vstack((arrays[0], arrays[1]))
             self._nbound = self._start_nbound
             self._wbound = self._start_wbound
+            print "2 tiles needed - S"
         elif tiles_needed["E"]:
             arrays = stage_arrays([filename_dict["C"], filename_dict["E"]])
-            final_array = hstack(arrays)
+            final_array = np.hstack((arrays[0], arrays[1]))
             self._nbound = self._start_nbound
             self._wbound = self._start_wbound
+            print "2 tiles needed - E"
         elif tiles_needed["W"]:
             arrays = stage_arrays([filename_dict["W"], filename_dict["C"]])
-            final_array = hstack(arrays)
+            final_array = np.hstack((arrays[0], arrays[1]))
             self._nbound = self._start_nbound 
             self._wbound = self._start_wbound + 1
+            print "2 tiles needed - W"
 
 
+        print self._nbound, self._wbound
         return final_array
 
-        # return np.vstack((get_row([filename_dict["NW"], filename_dict["N"], filename_dict["NE"]]),
-        #                   get_row([filename_dict["W"], filename_dict["C"], filename_dict["E"]]),
-        #                   get_row([filename_dict["SW"], filename_dict["S"], filename_dict["SE"]])))
 
     def _get_tiles_needed(self):
         """This functions tests where the original latlong is positioned in the
@@ -632,7 +635,9 @@ class SunsetViewFinder(object):
         y_end = y_index + self._radius_in_indices + 1
         x_begin = max(x_index - self._radius_in_indices, 0)
         x_end = x_index + self._radius_in_indices + 1
-       
+        print y_begin, y_end, x_begin, x_end
+        print self._elevation_array
+
         cropped_elevation_array = self._elevation_array[y_begin:y_end, 
                                                         x_begin:x_end]
 

@@ -90,12 +90,9 @@ def find_points():
     if exists:
 
         print "starting tile exists in bucket"
-
-        exact_N_bound = n + 1+ .00166666666
-        exact_W_bound = - (w + 1 + .0016666667)    
-
-        # call into utilities functions to get list of lat and longs for best sunset spots
-        # sunset_spots = pick_n_best_points(latlong, exact_N_bound, exact_W_bound, radius)
+        # exact bounds of starting data tile
+        exact_N_bound = n + .00166666666
+        exact_W_bound = - (w + .0016666667)    
 
         # use SunsetViewFinder class to instantiate a new object
         # exact n and w bounds are now the bounds of the center tile
