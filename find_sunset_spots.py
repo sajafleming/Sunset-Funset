@@ -296,7 +296,7 @@ class SunsetViewFinder(object):
         elif tiles_needed["W"]:
             arrays = stage_arrays([filename_dict["W"], filename_dict["C"]])
             final_array = np.hstack((arrays[0], arrays[1]))
-            self._nbound = self._start_nbound 
+            self._nbound = self._start_nbounwd 
             self._wbound = self._start_wbound + 1
             print "2 tiles needed - W"
 
@@ -675,15 +675,25 @@ class SunsetViewFinder(object):
                                len(self._cropped_elevation_array))
         column_lower_bound = max(-(BOUNDING_BOX) + candidate_point[1], 0)
         column_upper_bound = min(candidate_point[1] + (BOUNDING_BOX), 
-                                 len(self._cropped_elevation_array))
+                                 len(self._cropped_elevation_array[0]))
+
+        print "this is what you are looking for"
+        print candidate_point[1] + (BOUNDING_BOX) 
+        print len(self._cropped_elevation_array[0])
 
         # maybe change the following by passing the elevation with the candidate
         # point?
         candidate_elevation = self._elevation_by_indices(candidate_point) 
 
         # TODO: comment and doc string
+        # TODO: OFF BY ONE? PLEASE CHECK
+        # IndexError: index 1784 is out of bounds for axis 0 with size 1784
+        # print rows_lower_bound, rows_upper_bound, column_lower_bound, column_upper_bound
         for row in range(rows_lower_bound, rows_upper_bound):
             for column in range(column_lower_bound, column_upper_bound):
+                # print row, column
+                # print "SIZE"
+                # print len(self._cropped_elevation_array[0])
 
                 # If the elevation of a point is greater than the elevation for 
                 # the candidate point, return False meaning the candidate point 
@@ -702,7 +712,8 @@ class SunsetViewFinder(object):
         file). DEGREES_PER_INDEX is calculated to be 0.0002777777777685509.
         """
 
-        # currently in terms of master array, TODO change to whichever size
+        # nbound and wbound are the coordinates for the top left corner of the
+        # elevation array, regardless of the shape of the array
 
         lat = self._latlong[0]
         lng = self._latlong[1]
@@ -755,23 +766,15 @@ class SunsetViewFinder(object):
 
         return candidates_with_ranking[:100]
 
-    # @staticmethod
-    # def _read_img_file(filepath):
-    #     """Read .img file as 2D numpy array given a filepath. 
+# second two parameters are ceiling of original coord with the decimals added
+# two tiles - stl
+test = SunsetViewFinder((38.6270, -90.1994), 39.00166666667, -90.0016666667, 20)
+print test.pick_best_points()
 
-    #     The .img files are raster data. The osgeo library provides a way to 
-    #     open these files and read them as a numpy 2D array.
-
-    #     Each array of 1 arc second should have dimensions 3612 x 3612. 
-    #     """
-
-    #     geo = gdal.Open(filepath)
-       
-    #     arr = geo.ReadAsArray()
-
-    #     return arr
-
-
-# test = SunsetViewFinder((36.79, -117.05), 38.00166666667, -118.0016666667, 20)
+# four tiles needed
+# test = SunsetViewFinder((36.79, -117.05), 37.00166666667, -117.0016666667, 20)
 # print test.pick_best_points()
 
+# one tile needed - sf!
+# test = SunsetViewFinder((37.7749, -122.4194), 38.00166666667, -122.0016666667, 20)
+# print test.pick_best_points()
