@@ -1,8 +1,6 @@
 "use strict";
 $(document).ready(function () {
 
-  // $('.multi-item-carousel').hide()
-
   var mapProp = {
     center: new google.maps.LatLng(37.7749,-122.4194),
     zoom:10,
@@ -12,7 +10,6 @@ $(document).ready(function () {
   // new google maps object
   var map = new google.maps.Map($("#googleMap")[0], mapProp);
   var markers = [];
-  // var mainMarker = [];
 
   // if geolocation can obtain location from browser, center map on user location
   if (navigator.geolocation) {
@@ -25,6 +22,7 @@ $(document).ready(function () {
   // new google maps geocoder object
   var geocoder = new google.maps.Geocoder();
          
+  // disables the button and turns text to "loading..."
   $('#submit-location').on('click', function () {
     var $this = $(this);
     $this.button('loading');
@@ -33,12 +31,11 @@ $(document).ready(function () {
   // getting values from user text box
   $('#user-input-form').submit(function(evt) {
     evt.preventDefault()
-    // clear existing pictures in carousel
-    //$('.carousel-inner').empty();
+  
     geocodeAddress(geocoder, map);
-    // clear carousel arrows
-    // $('.multi-item-carousel').hide()
   });
+
+  // i don't think this does anything
   $('#user-textbox').submit(function(evt) {
     //geocodeAddress(geocoder, map);
   });
@@ -77,8 +74,9 @@ $(document).ready(function () {
         autocomplete.setBounds(circle.getBounds());
       });
     }
-  }    
+  } 
 
+  // convert address to latlong to send to backend
   function geocodeAddress(geocoder, resultsMap) {
     var address = $('#user-textbox').val()
     geocoder.geocode({'address': address}, function(results, status) {
@@ -126,9 +124,8 @@ $(document).ready(function () {
     });
   }
 
-
+  // function to plot sunsets points
   function plotSunsetSpots(data) {
-    // function to plot sunsets points
     if (data.hasOwnProperty("error")) {
       // show error message
       $('#error-modal').css('display', 'block');
@@ -143,16 +140,22 @@ $(document).ready(function () {
 
         var myLatLng = {lat: sunsetCoordinates[i].lat, lng: sunsetCoordinates[i].lng};
 
+        // content of info window will be address
+        var contentString = geocodeLatLng(myLatLng, geocoder, map);
+
         markers.push(addMarker(myLatLng, sunsetCoordinates[i].urls));
     }
 
     // stop loading button here (once points are plotted)
       $('#submit-location').button('reset');
-
     }
   }
 
+  // var contentString = ''
 
+
+
+  // add markers to the map
   function addMarker(myLatLng, urls) {
     
     var image = "http://maps.google.com/mapfiles/ms/icons/red-dot.png"; // smaller pin
@@ -163,22 +166,47 @@ $(document).ready(function () {
       // icon: image
     });
 
-    // listener for when marker clicked, success function is showpics
-    marker.addListener('click', function(evt) { 
-      showPictures(myLatLng, urls);
-      // loop through and set each icon back to default, except for the first one (the point searched for)
-      for (var i = 1; i < markers.length; i++) {
-        markers[i].setIcon(null);
-      }
-      // change the selected marker to the sunpin 
-      this.setIcon("http://i66.tinypic.com/17wjro.png");
-      // show carousel arrows
-      // $('.multi-item-carousel').show()
-      // $("#modal-pics").modal()
+    // create new info window object
+    var infowindow = new google.maps.InfoWindow({
+      content: contentString
     });
+
+    marker.addListener('click', function() {
+          infowindow.open(map, marker);
+        });
+
+    // // listener for when marker clicked, success function is showpics
+    // marker.addListener('click', function(evt) { 
+    //   showPictures(myLatLng, urls);
+    //   // loop through and set each icon back to default, except for the first one (the point searched for)
+    //   for (var i = 1; i < markers.length; i++) {
+    //     markers[i].setIcon(null);
+    //   }
+    //   // change the selected marker to the sunpin 
+    //   this.setIcon("http://i66.tinypic.com/17wjro.png");
+    // });
 
     return marker;
   }
+
+  // turn the final latlongs into the names of human readable locations!
+  function geocodeLatLng(latlng, geocoder, map) {
+    // var latlng = myLatLng
+    // console.log(geocoder.geocode({ 'latLng': latlng }))
+
+    geocoder.geocode({'location': latlng}, function(results, status) {
+      if (status === 'OK') {
+        if (results[1]) {
+          console.log(results[0].formatted_address)
+        } else {
+          window.alert('No results found');
+        }
+      } else {
+        window.alert('Geocoder failed due to: ' + status);
+      }
+    });
+
+  };
 
   // new and improved modal to show pics <3
   function showPictures(latlong, urls) {
@@ -217,13 +245,12 @@ $(document).ready(function () {
       }
     }
 
-    // bootstrap carousel - supposed to not move on it's own, but it is
+    // bootstrap carousel - supposed to not move on it's own, but it is anyway
     $('.carousel').carousel({
       interval: false
     })
 
   }
-
 
 
 
