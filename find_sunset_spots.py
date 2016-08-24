@@ -179,7 +179,8 @@ class SunsetViewFinder(object):
         reconcile this, slice the OVERLAPPING_INDICES off the south and east 
         bounds.
 
-        Will return an array with the necesary tiles added, see _get_tiles_needed
+        Will return an array with the necesary tiles added, from 
+        _get_tiles_needed
         """
 
         def stage_arrays(filenames):
@@ -296,7 +297,7 @@ class SunsetViewFinder(object):
         elif tiles_needed["W"]:
             arrays = stage_arrays([filename_dict["W"], filename_dict["C"]])
             final_array = np.hstack((arrays[0], arrays[1]))
-            self._nbound = self._start_nbounwd 
+            self._nbound = self._start_nbound 
             self._wbound = self._start_wbound + 1
             print "2 tiles needed - W"
 
@@ -677,9 +678,9 @@ class SunsetViewFinder(object):
         column_upper_bound = min(candidate_point[1] + (BOUNDING_BOX), 
                                  len(self._cropped_elevation_array[0]))
 
-        print "this is what you are looking for"
-        print candidate_point[1] + (BOUNDING_BOX) 
-        print len(self._cropped_elevation_array[0])
+        # print "this is what you are looking for"
+        # print candidate_point[1] + (BOUNDING_BOX) 
+        # print len(self._cropped_elevation_array[0])
 
         # maybe change the following by passing the elevation with the candidate
         # point?
@@ -688,7 +689,8 @@ class SunsetViewFinder(object):
         # TODO: comment and doc string
         # TODO: OFF BY ONE? PLEASE CHECK
         # IndexError: index 1784 is out of bounds for axis 0 with size 1784
-        # print rows_lower_bound, rows_upper_bound, column_lower_bound, column_upper_bound
+        # print rows_lower_bound, rows_upper_bound, column_lower_bound, 
+        # column_upper_bound
         for row in range(rows_lower_bound, rows_upper_bound):
             for column in range(column_lower_bound, column_upper_bound):
                 # print row, column
@@ -768,8 +770,8 @@ class SunsetViewFinder(object):
 
 # second two parameters are ceiling of original coord with the decimals added
 # two tiles - stl
-test = SunsetViewFinder((38.6270, -90.1994), 39.00166666667, -90.0016666667, 20)
-print test.pick_best_points()
+# test = SunsetViewFinder((38.6270, -90.1994), 39.00166666667, -90.0016666667, 20)
+# print test.pick_best_points()
 
 # four tiles needed
 # test = SunsetViewFinder((36.79, -117.05), 37.00166666667, -117.0016666667, 20)
@@ -778,3 +780,7 @@ print test.pick_best_points()
 # one tile needed - sf!
 # test = SunsetViewFinder((37.7749, -122.4194), 38.00166666667, -122.0016666667, 20)
 # print test.pick_best_points()
+
+# jersey 'SunsetViewFinder' object has no attribute '_start_nbounwd'
+test = SunsetViewFinder((40.0583, -74.4057), 41.00166666667, -74.0016666667, 20)
+print test.pick_best_points()
