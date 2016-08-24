@@ -3,7 +3,7 @@ from shutil import copyfile
 from osgeo import gdal
 import numpy as np
 
-DESTINATION_DIRECTORY = "/Users/Sarah/PROJECT/data/aa_npy/"
+DESTINATION_DIRECTORY = "/Users/Sarah/PROJECT/data/ad_npy/"
 
 # change new img to npy
 for img in listdir(DESTINATION_DIRECTORY):

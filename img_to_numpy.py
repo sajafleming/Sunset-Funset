@@ -7,8 +7,8 @@ import numpy as np
 
 
 # edit directory per file split
-ORIGIN_DIRECTORY = "/Users/Sarah/PROJECT/data/aa/"
-DESTINATION_DIRECTORY = "/Users/Sarah/PROJECT/data/aa_npy/"
+ORIGIN_DIRECTORY = "/Users/Sarah/PROJECT/data/ai/"
+DESTINATION_DIRECTORY = "/Users/Sarah/PROJECT/data/ai_npy/"
 
 for dir_name in listdir(ORIGIN_DIRECTORY):
     if "USGS" not in dir_name:
