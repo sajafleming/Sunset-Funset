@@ -137,13 +137,44 @@ $(document).ready(function () {
       
       for (var i = 0; i < coordinatesLength; i++) {
         console.log(sunsetCoordinates[i].lat, sunsetCoordinates[i].lng);
+        console.log(sunsetCoordinates[i].urls)
 
         var myLatLng = {lat: sunsetCoordinates[i].lat, lng: sunsetCoordinates[i].lng};
+        var urls = sunsetCoordinates[i].urls
 
-        // content of info window will be address
-        var contentString = geocodeLatLng(myLatLng, geocoder, map);
+        // get address from geocoder
+        // var address = geocodeLatLng(myLatLng, geocoder, map);
 
-        markers.push(addMarker(myLatLng, sunsetCoordinates[i].urls));
+        geocoder.geocode({'location': myLatLng}, function(results, status) {
+          var address = '';
+
+          if (status === 'OK') {
+            if (results[0]) {
+              // console.log(results[0].formatted_address)
+              address = results[0].formatted_address
+            } else {
+              window.alert('No results found');
+            }
+          } else {
+            window.alert('Geocoder failed due to: ' + status);
+          }
+
+          console.log(address);
+
+          var contentString = '<div id="content">'+
+              '<div id="siteNotice">'+
+              '</div>'+
+              '<h1 id="firstHeading" class="firstHeading">' +
+              address +
+              '</h1>'+
+              '<div id="bodyContent">'+
+              '</div>'+
+              '</div>';
+
+          console.log(urls);
+
+          // markers.push(addMarker(myLatLng, sunsetCoordinates[i].urls, contentString));
+        });
     }
 
     // stop loading button here (once points are plotted)
@@ -151,12 +182,8 @@ $(document).ready(function () {
     }
   }
 
-  // var contentString = ''
-
-
-
   // add markers to the map
-  function addMarker(myLatLng, urls) {
+  function addMarker(myLatLng, urls, content) {
     
     var image = "http://maps.google.com/mapfiles/ms/icons/red-dot.png"; // smaller pin
     var marker = new google.maps.Marker({
@@ -168,11 +195,10 @@ $(document).ready(function () {
 
     // create new info window object
     var infowindow = new google.maps.InfoWindow({
-      content: contentString
     });
 
     marker.addListener('click', function() {
-          infowindow.open(map, marker);
+          infowindow.open(map, marker, content);
         });
 
     // // listener for when marker clicked, success function is showpics
@@ -190,20 +216,35 @@ $(document).ready(function () {
   }
 
   // turn the final latlongs into the names of human readable locations!
-  function geocodeLatLng(latlng, geocoder, map) {
-    // var latlng = myLatLng
-    // console.log(geocoder.geocode({ 'latLng': latlng }))
+  function geocodeLatLng(latlng) {
 
     geocoder.geocode({'location': latlng}, function(results, status) {
+      var address = '';
+
       if (status === 'OK') {
-        if (results[1]) {
+        if (results[0]) {
           console.log(results[0].formatted_address)
+          address = results[0].formatted_address
         } else {
           window.alert('No results found');
         }
       } else {
         window.alert('Geocoder failed due to: ' + status);
       }
+
+      console.log(address)
+
+        var contentString = '<div id="content">'+
+            '<div id="siteNotice">'+
+            '</div>'+
+            '<h1 id="firstHeading" class="firstHeading">' +
+            address +
+            '</h1>'+
+            '<div id="bodyContent">'+
+            '</div>'+
+            '</div>';
+
+        markers.push(addMarker(latlng, sunsetCoordinates[i].urls, contentString));
     });
 
   };
