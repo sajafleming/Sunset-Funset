@@ -7,9 +7,19 @@ $(document).ready(function () {
     mapTypeId:google.maps.MapTypeId.TERRAIN
   };
 
-  // new google maps object
+  // new google maps objects
   var map = new google.maps.Map($("#googleMap")[0], mapProp);
   var markers = [];
+  var infoWindows = [];
+  var directionsService;
+  var directionsDisplay;
+  // new google maps geocoder object
+  var geocoder = new google.maps.Geocoder();
+
+  // where to put this?
+  directionsService = new google.maps.DirectionsService();
+  directionsDisplay = new google.maps.DirectionsRenderer();
+  directionsDisplay.setMap(map);
 
   // if geolocation can obtain location from browser, center map on user location
   if (navigator.geolocation) {
@@ -18,9 +28,6 @@ $(document).ready(function () {
       map.setCenter(initialLocation);
     });
   }
-  
-  // new google maps geocoder object
-  var geocoder = new google.maps.Geocoder();
          
   // disables the button and turns text to "loading..."
   $('#submit-location').on('click', function () {
@@ -209,7 +216,14 @@ $(document).ready(function () {
     });
 
     marker.addListener('click', function() {
+          while (infoWindows.length > 0) {
+            infoWindows.pop().setMap(null);
+          }
           infowindow.open(map, marker);
+          infoWindows.push(infowindow);
+
+          // call get directions here
+          // getDirections(latlng));
         });
 
     // // listener for when marker clicked, success function is showpics
@@ -260,6 +274,25 @@ $(document).ready(function () {
 
   };
 
+  // function for getting directions
+  function getDirections(latlongs) {
+    var startLat = 37.788862;
+    var startLng = -122.411507;
+    var destinationLat = $(this).data('lat');
+    var destinationLng = $(this).data('lng');
+    
+    var request = {
+        origin: {lng: startLng, lat: startLat},
+        destination: {lng: Number(destinationLng), lat: Number(destinationLat)},
+        travelMode: google.maps.TravelMode["TRANSIT"]
+    };
+    directionsService.route(request, function(response, status) {
+      if (status == google.maps.DirectionsStatus.OK) {
+        directionsDisplay.setDirections(response);
+      }
+    });
+  }
+
   // new and improved modal to show pics <3
   function showPictures(latlong, urls) {
     $('.carousel-inner').empty();
@@ -300,7 +333,7 @@ $(document).ready(function () {
     // bootstrap carousel - supposed to not move on it's own, but it is anyway
     $('.carousel').carousel({
       interval: false
-    })
+    });
 
   }
 

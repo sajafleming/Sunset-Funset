@@ -161,6 +161,7 @@ class SunsetViewFinder(object):
         print "TIME _convert_to_latlong: {}".format(t1 - t0)
 
         print "NUMBER OF FINAL LATLONGS {}".format(len(final_latlongs))
+        print final_latlongs
 
         return final_latlongs
 
@@ -782,5 +783,5 @@ class SunsetViewFinder(object):
 # print test.pick_best_points()
 
 # jersey 'SunsetViewFinder' object has no attribute '_start_nbounwd'
-test = SunsetViewFinder((40.0583, -74.4057), 41.00166666667, -74.0016666667, 20)
-print test.pick_best_points()
+# test = SunsetViewFinder((40.0583, -74.4057), 41.00166666667, -74.0016666667, 20)
+# print test.pick_best_points()
