@@ -137,20 +137,30 @@ $(document).ready(function () {
       
       for (var i = 0; i < coordinatesLength; i++) {
         console.log(sunsetCoordinates[i].lat, sunsetCoordinates[i].lng);
-        console.log(sunsetCoordinates[i].urls)
+        console.log(sunsetCoordinates[i].urls);
 
         var myLatLng = {lat: sunsetCoordinates[i].lat, lng: sunsetCoordinates[i].lng};
-        var urls = sunsetCoordinates[i].urls
+        var urls = sunsetCoordinates[i].urls;
 
         // get address from geocoder
         // var address = geocodeLatLng(myLatLng, geocoder, map);
 
-        geocoder.geocode({'location': myLatLng}, function(results, status) {
+        geocoder.geocode({'location': myLatLng}, makeGeocodeCallback(myLatLng, urls));
+      }
+
+    // stop loading button here (once points are plotted)
+      $('#submit-location').button('reset');
+    }
+  }
+
+  function makeGeocodeCallback(latLng, urls) {
+    return function(results, status) {
+          var addressName = '';
           var address = '';
 
           if (status === 'OK') {
             if (results[0]) {
-              // console.log(results[0].formatted_address)
+              addressName = results[1].formatted_address
               address = results[0].formatted_address
             } else {
               window.alert('No results found');
@@ -159,27 +169,27 @@ $(document).ready(function () {
             window.alert('Geocoder failed due to: ' + status);
           }
 
+          console.log(addressName);
           console.log(address);
-
+          
           var contentString = '<div id="content">'+
               '<div id="siteNotice">'+
               '</div>'+
-              '<h1 id="firstHeading" class="firstHeading">' +
+              '<h5 id="firstHeading" class="firstHeading">' +
+              addressName +
+              '</h5>'+
+              '<h6 id="secondHeading" class="secondHeading">' +
               address +
-              '</h1>'+
+              '</h6>'+
               '<div id="bodyContent">'+
               '</div>'+
               '</div>';
 
+          console.log("the urls: ");
           console.log(urls);
 
-          // markers.push(addMarker(myLatLng, sunsetCoordinates[i].urls, contentString));
-        });
-    }
-
-    // stop loading button here (once points are plotted)
-      $('#submit-location').button('reset');
-    }
+          markers.push(addMarker(latLng, urls, contentString));
+        };
   }
 
   // add markers to the map
@@ -195,10 +205,11 @@ $(document).ready(function () {
 
     // create new info window object
     var infowindow = new google.maps.InfoWindow({
+      content: content
     });
 
     marker.addListener('click', function() {
-          infowindow.open(map, marker, content);
+          infowindow.open(map, marker);
         });
 
     // // listener for when marker clicked, success function is showpics
