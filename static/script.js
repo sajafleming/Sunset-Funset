@@ -11,6 +11,8 @@ $(document).ready(function () {
   var map = new google.maps.Map($("#googleMap")[0], mapProp);
   var markers = [];
   var infoWindows = [];
+  var userLat;
+  var userLng;
   var directionsService;
   var directionsDisplay;
   // new google maps geocoder object
@@ -101,8 +103,10 @@ $(document).ready(function () {
         console.log("Lat " + results[0].geometry.location.lat());
         console.log("Lng " + results[0].geometry.location.lng());
 
-        var lat = results[0].geometry.location.lat()
-        var lng = results[0].geometry.location.lng()
+        var lat = results[0].geometry.location.lat();
+        var lng = results[0].geometry.location.lng();
+        userLat = lat;
+        userLng = lng;
 
         // get the lat and long that the user entered and the radius
         var params = {"lat": lat, "lng": lng, 
@@ -223,7 +227,7 @@ $(document).ready(function () {
           infoWindows.push(infowindow);
 
           // call get directions here
-          // getDirections(latlng));
+          getDirections(myLatLng);
         });
 
     // // listener for when marker clicked, success function is showpics
@@ -275,16 +279,14 @@ $(document).ready(function () {
   };
 
   // function for getting directions
-  function getDirections(latlongs) {
-    var startLat = 37.788862;
-    var startLng = -122.411507;
-    var destinationLat = $(this).data('lat');
-    var destinationLng = $(this).data('lng');
+  function getDirections(myLatLng) {
+    var destinationLat = myLatLng['lat'];
+    var destinationLng = myLatLng['lng'];
     
     var request = {
-        origin: {lng: startLng, lat: startLat},
+        origin: {lng: userLng, lat: userLat},
         destination: {lng: Number(destinationLng), lat: Number(destinationLat)},
-        travelMode: google.maps.TravelMode["TRANSIT"]
+        travelMode: google.maps.TravelMode["DRIVING"]
     };
     directionsService.route(request, function(response, status) {
       if (status == google.maps.DirectionsStatus.OK) {
