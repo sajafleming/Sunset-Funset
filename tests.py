@@ -1,6 +1,32 @@
 import unittest
 from find_sunset_spots import *
 
+NW = [ [0 1 2],
+       [3 4 5],
+       [6 7 8], ]
+NE = [ [0 1 2],
+       [3 4 5],
+       [6 7 8] ]
+SW = [ [0 1 2],
+       [3 4 5],
+       [6 7 8] ]
+SE = [ [0 1 2],
+       [3 4 5],
+       [6 7 8] ]
+N = [  [0 1 2],
+       [3 4 5],
+       [6 7 8] ]
+S = [  [0 1 2],
+       [3 4 5],
+       [6 7 8] ]
+E = [  [0 1 2],
+       [3 4 5],
+       [6 7 8] ]
+W = [  [0 1 2],
+       [3 4 5],
+       [6 7 8] ]
+
+
 class SunsetTests(unittest.TestCase):
 
     def test_generate_surrounding_filenames(self):
@@ -12,9 +38,9 @@ class SunsetTests(unittest.TestCase):
          'N': 'n6w10.img', 'SW': 'n4w11.img', 'NE': 'n6w9.img', 
          'SE': 'n4w9.img', 'NW': 'n6w11.img'})
 
-    def test_read_img_file(self):
-        testing = read_img_file("/Users/Sarah/PROJECT/imgfiles/n33w117.img")
-        self.assertEqual(len(testing), 3612)
+    def get_tiles_needed(self):
+        
+
 
 
 
