@@ -18,10 +18,11 @@ $(document).ready(function () {
   // new google maps geocoder object
   var geocoder = new google.maps.Geocoder();
 
-  // where to put this?
+  // for showing directions
   directionsService = new google.maps.DirectionsService();
   directionsDisplay = new google.maps.DirectionsRenderer();
   directionsDisplay.setMap(map);
+  directionsDisplay.setOptions( { suppressMarkers: true } );
 
   // if geolocation can obtain location from browser, center map on user location
   if (navigator.geolocation) {
