@@ -34,11 +34,6 @@ def home():
 
     return render_template("homepage.html")
 
-# @app.route('/intro')
-# def intro():
-#     """Intro page"""
-
-#     return render_template("intro.html")
 
 @app.route('/data-not-available')
 def notintro():
@@ -97,6 +92,7 @@ def find_points():
         # use SunsetViewFinder class to instantiate a new object
         # exact n and w bounds are now the bounds of the center tile
         potential_sunset_spots = SunsetViewFinder(latlong, exact_N_bound, exact_W_bound, radius)
+        # returns in the format [((lat, lng), elevation in feet),...]
         sunset_spots = potential_sunset_spots.pick_best_points()
 
         # query all latlongs in flickr for pictures
@@ -105,13 +101,14 @@ def find_points():
 
         for latlong in sunset_spots:
 
-            data = request_flickr_data(latlong[0], latlong[1], .25)
+            elevation = latlong[1]
+
+            data = request_flickr_data(latlong[0][0], latlong[0][1], .25)
             image_urls = data_to_urls(data)
-            # for now just add the first url to the final urls list
-            # maybe later I will have a better way of picking popular pictures
 
             # construct data dictionary
-            final_data.append({"lat": latlong[0], "lng": latlong[1], "urls": image_urls})
+            final_data.append({"lat": latlong[0][0], "lng": latlong[0][1], 
+                               "urls": image_urls, "elv": elevation})
 
 
         # final urls is now a dict containing latlongs and corresponding urls

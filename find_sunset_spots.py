@@ -120,7 +120,11 @@ class SunsetViewFinder(object):
         # [((row_index, column_index), [elevation_score, cliff_score]), ...]
         candidates_with_all_scores = []
 
-        # Add elevation score and cliff score to candidate_point tuple
+        print "candidates_with_elevations in meters:"
+        print candidates_with_elevations
+
+        # Add elevation score and cliff score to candidate_point tuple along 
+        # with the elevation in FEET for that point
         t0 = time.time()
         for candidate_point in candidates_with_elevations:
             # Elevation of the candidtate point
@@ -130,16 +134,18 @@ class SunsetViewFinder(object):
             elevation_score = candidate_elevation - self._elevation_of_center
             # Get the cliff score for the candidate point
             cliff_score = self._get_cliff_score(candidate_point)
+            # Convert the elevation to feet (cause who uses meters)
+            candidate_elevation_feet = candidate_elevation * 3.28084
             
             # Append the scores to the candidates list
             candidates_with_all_scores.append((candidate_point[0], 
-                [elevation_score, cliff_score]))
+                [elevation_score, cliff_score], candidate_elevation_feet))
 
         t1 = time.time()
         print "TIME _get_cliff_score and elevation_score: {}".format(t1 - t0)
         
         # Rank and sort points based on ranking - rank function only returns 
-        # the top 100
+        # the top 100, returns in the format ((lat, long), score, elevation ft)
         t0 = time.time()
         ranked_points = self._rank_candidate_points(candidates_with_all_scores)
         t1 = time.time()
@@ -148,14 +154,17 @@ class SunsetViewFinder(object):
         print "First 100 candidate points sorted by rank"
         print ranked_points
 
-        # Create a new list of just latlongs
+        # Create a new list of just latlongs and elevation (ft)
         final_latlongs = []
 
         t0 = time.time()
         # Finally, convert these top 100 points to latlongs
         for final_point in ranked_points[:self._number_of_points_returned]:
+
+            coords = final_point[0]
+            elevation = final_point[2]
     
-            final_latlongs.append(self._convert_to_latlong(final_point[0]))
+            final_latlongs.append((self._convert_to_latlong(coords), elevation))
 
         t1 = time.time()
         print "TIME _convert_to_latlong: {}".format(t1 - t0)
@@ -755,6 +764,7 @@ class SunsetViewFinder(object):
 
             elevation_score = candidate_point[1][0]
             cliffiness_score = candidate_point[1][1]
+            elevation_feet = candidate_point[2]
 
             # Multiply the scores by weight to create a ranking number
             candidates_score = (elevation_score * .05) + (cliffiness_score * .1)
@@ -762,7 +772,7 @@ class SunsetViewFinder(object):
 
             # Add point and rank to a list
             candidates_with_ranking.append((candidate_point[0], 
-                                            candidates_score))
+                                            candidates_score, elevation_feet))
 
         # Sort list in descending order by ranking
         candidates_with_ranking.sort(key=itemgetter(1), reverse=True)

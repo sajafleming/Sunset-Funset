@@ -143,21 +143,23 @@ $(document).ready(function () {
       $('#error-modal').css('display', 'block');
     } else {
 
-      // add pins
+      // data from ajax call
       var sunsetCoordinates = data.sunset_spots;
       var coordinatesLength = sunsetCoordinates.length;
-      
+
+      // add pins
       for (var i = 0; i < coordinatesLength; i++) {
         console.log(sunsetCoordinates[i].lat, sunsetCoordinates[i].lng);
-        console.log(sunsetCoordinates[i].urls);
+        console.log(sunsetCoordinates[i].urls, sunsetCoordinates[i].elv);
 
         var myLatLng = {lat: sunsetCoordinates[i].lat, lng: sunsetCoordinates[i].lng};
         var urls = sunsetCoordinates[i].urls;
+        var elevation = sunsetCoordinates[i].elv
 
         // get address from geocoder
         // var address = geocodeLatLng(myLatLng, geocoder, map);
 
-        geocoder.geocode({'location': myLatLng}, makeGeocodeCallback(myLatLng, urls));
+        geocoder.geocode({'location': myLatLng}, makeGeocodeCallback(myLatLng, urls, elevation));
       }
 
     // stop loading button here (once points are plotted)
@@ -165,7 +167,7 @@ $(document).ready(function () {
     }
   }
 
-  function makeGeocodeCallback(latLng, urls) {
+  function makeGeocodeCallback(latLng, urls, elevation) {
     return function(results, status) {
           var addressName = '';
           var address = '';
@@ -194,6 +196,7 @@ $(document).ready(function () {
               address +
               '</h6>'+
               '<div id="bodyContent">'+
+              elevation + ' feet'
               '</div>'+
               '</div>';
 
