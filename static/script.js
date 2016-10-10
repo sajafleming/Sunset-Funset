@@ -189,14 +189,17 @@ $(document).ready(function () {
           var contentString = '<div id="content">'+
               '<div id="siteNotice">'+
               '</div>'+
-              '<h5 id="firstHeading" class="firstHeading">' +
+              '<h5 id="firstHeading" class="firstHeading">'+
               addressName +
               '</h5>'+
-              '<h6 id="secondHeading" class="secondHeading">' +
+              '<h6 id="secondHeading" class="secondHeading">'+
               address +
               '</h6>'+
               '<div id="bodyContent">'+
-              elevation + ' feet'
+              elevation + ' feet'+
+              '</div>'+
+              '<div>'+
+              '<a id="see-pictures">see pictures</a>'
               '</div>'+
               '</div>';
 
@@ -204,6 +207,7 @@ $(document).ready(function () {
           console.log(urls);
 
           markers.push(addMarker(latLng, urls, contentString));
+
         };
   }
 
@@ -232,6 +236,12 @@ $(document).ready(function () {
 
           // call get directions here
           getDirections(myLatLng);
+
+          // After you open the info window, the see-pictures element exists, so
+          // we can now define its click handler.
+          $("#see-pictures").click(function(evt) {
+            showPictures(myLatLng, urls);
+          });
         });
 
     // // listener for when marker clicked, success function is showpics
