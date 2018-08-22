@@ -73,15 +73,15 @@ class SunsetViewFinder(object):
 
         Returns latlongs, representing the best sunset viewing spots. 
         """
-
+        print "hello"
         # Convert the search radius from miles to number of indices
         self._radius_in_indices = SunsetViewFinder._convert_radius_to_indices(
                                   self._search_radius)
-
+        print "hi"
         # Create a numpy 2D array with elevation data surrounding the user's 
         # inputted latlong
         self._elevation_array = self._create_elevation_array()
-
+        print "yo"
         # Crop the elevation array according to the search radius
         (self._cropped_elevation_array, self._cropped_array_top_left_indices, 
             self._user_latlong_coordinates) = self._crop_elevation_array()
