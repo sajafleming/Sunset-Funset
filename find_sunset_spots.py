@@ -743,9 +743,10 @@ class SunsetViewFinder(object):
 
         Each index represents approximately .0186411357696567 miles
         """
-        print float(user_radius_miles)
-        print MILES_PER_INDEX
-        print int(float(user_radius_miles) / MILES_PER_INDEX)
+        print "got here"
+        print "float(user_radius_miles {})".format(float(user_radius_miles))
+        print "float(MILES_PER_INDEX {})".format(MILES_PER_INDEX)
+        print "float(divide {})".format(int(float(user_radius_miles) / MILES_PER_INDEX))
 
         return int(float(user_radius_miles) / MILES_PER_INDEX)
 
