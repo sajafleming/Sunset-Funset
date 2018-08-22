@@ -738,11 +738,14 @@ class SunsetViewFinder(object):
 
     @staticmethod
     def _convert_radius_to_indices(user_radius_miles):
-        """Take the mileage that the user inputted and conver to how many
+        """Take the mileage that the user inputted and convert to how many
         indices if would represent. 
 
         Each index represents approximately .0186411357696567 miles
         """
+        print float(user_radius_miles)
+        print MILES_PER_INDEX
+        print int(float(user_radius_miles) / MILES_PER_INDEX)
 
         return int(float(user_radius_miles) / MILES_PER_INDEX)
 
